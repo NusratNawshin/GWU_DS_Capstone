@@ -20,16 +20,24 @@ import pickle
 torch.manual_seed(17)
 
 ### VARIABLES
-train_file_path = "../data/annotations/train.csv"
+train_file_path = '../data/tokenized_annotation/train.pkl'
 train_image_path = "../data/images/train/"
 
-val_file_path = "../data/annotations/val.csv"
+val_file_path = '../data/tokenized_annotation/val.pkl'
 val_image_path = "../data/images/val/"
 
+vocabs = pd.read_pickle('model/vocabsize.pkl')
 
-max_seq_len = 46
+index_to_word=vocabs["index_to_word"]
+word_to_index = vocabs["word_to_index"]
+max_seq_len = vocabs["max_seq_len"]
+vocab_size=vocabs["vocab_size"]
+
+
+
+# max_seq_len = 46
 IMAGE_SIZE = 224
-EPOCH = 30
+EPOCH = 50
 
 ###
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -37,128 +45,132 @@ print(device)
 
 ###
 # TRAIN
-train = pd.read_csv(train_file_path, sep=',', skipinitialspace = True)
+# train = pd.read_csv(train_file_path)
+train = pd.read_pickle(train_file_path)
+# train = pd.read_csv(train_file_path, sep=',', skipinitialspace = True)
 print(f"Length of Train set: {len(train)}")
 print(train.tail(3))
 # VAL
-valid = pd.read_csv(val_file_path)
+# valid = pd.read_csv(val_file_path)
+valid = pd.read_pickle(val_file_path)
 print(f"Length of validation set: {len(valid)}")
 print(valid.head(3))
 
+
 #################################
-# Concat train & validation dataframes
-
-df = pd.concat([train,valid],ignore_index=True)
-print(f"Length of total df: {len(df)}")
-print(df[20559:20563])
-print('-'*60)
-print('-'*60)
-#################################
-# # CAPTION PREPROCESSING
-
-# remove single character
-df["cleaned_caption"] = df["Caption"].str.replace(r'\b[a-zA-Z] \b', '', regex=True)
-# valid["cleaned_caption"] = valid["Caption"].str.replace(r'\b[a-zA-Z] \b', '', regex=True)
-
-# lower characters
-df['cleaned_caption'] = df['cleaned_caption'].apply(str.lower)
-# valid['cleaned_caption'] = valid['cleaned_caption'].apply(str.lower)
-
-print('-'*60)
-print(df['Caption'][:4])
-print(df['cleaned_caption'][:4])
-print('-'*60)
-# Get maximum length of caption sequence
-df['cleaned_caption'] = df['cleaned_caption'].apply(lambda caption : ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + ['<end>'])
-df['seq_len'] = df['cleaned_caption'].apply(lambda x : len(x))
-max_seq_len = df['seq_len'].max()
-print(f"Maximum length of sequence: {max_seq_len}")
-print('-'*60)
-print(f"Data with caption sequence length more than 45")
-print(df[df['seq_len'] > 45])
-print('-'*60)
-print(f"Tokenized caption:- ")
-print(df['cleaned_caption'][0])
-df.drop(['seq_len'], axis = 1, inplace = True)
-print('-'*60)
-
-df['seq_len'] = df['cleaned_caption'].apply(lambda x : len(x))
-# Considering the max sequence length to be 46
-for i in range(len(df['cleaned_caption'])):
-    if "" in df['cleaned_caption'][i]:
-        df.iloc[i]['cleaned_caption']=df['cleaned_caption'][i].remove("")
-
-    if(len(df['cleaned_caption'][i])>46):
-        temp =df['cleaned_caption'][i]
-        temp = temp[:45]
-        temp.append("<end>")
-        df._set_value(i,'cleaned_caption',temp)
-
-print(df['cleaned_caption'][0])
-df['seq_len'] = df['cleaned_caption'].apply(lambda x : len(x))
-max_seq_len = df['seq_len'].max()
-print(f"Maximum length of sequence: {max_seq_len}")
-df.drop(['seq_len'], axis = 1, inplace = True)
-df['cleaned_caption'] = df['cleaned_caption'].apply(lambda caption : caption + ['<pad>']*(max_seq_len-len(caption)) )
-
-# Create Vocabulary
-word_list = df['cleaned_caption'].apply(lambda x : " ".join(x)).str.cat(sep = ' ').split(' ')
-word_dict = Counter(word_list)
-word_dict =  sorted(word_dict, key=word_dict.get, reverse=True)
-
-print('-'*60)
-print(f"Length of word dict: {len(word_dict)}")
-vocab_size = len(word_dict)
-print(f"Vocab Size: {vocab_size}")
-print('-'*60)
-
-# word to indexing
-index_to_word = {index: word for index, word in enumerate(word_dict)}
-word_to_index = {word: index for index, word in enumerate(word_dict)}
-# print(len(index_to_word), len(word_to_index))
-
-# Covert sequence of tokens to IDs
-df['text_seq']  = df['cleaned_caption'].apply(lambda caption : [word_to_index[word] for word in caption] )
-print(df.head(5))
-print('-'*60)
-
-# Train-Validation split
-print('-'*60)
-train = df[:20560]
-valid = df[20560:]
-valid.reset_index(inplace=True,drop=True)
-print("Train DF: ")
-print(train.tail(3))
-print("Validation DF: ")
-print(valid.head(3))
-print(type(train), len(train))
-print(type(valid), len(valid))
-print('-'*60)
+# # Concat train & validation dataframes
+#
+# df = pd.concat([train,valid],ignore_index=True)
+# print(f"Length of total df: {len(df)}")
+# print(df[20559:20563])
+# print('-'*60)
+# print('-'*60)
+# #################################
+# # # CAPTION PREPROCESSING
+#
+# # remove single character
+# df["cleaned_caption"] = df["Caption"].str.replace(r'\b[a-zA-Z] \b', '', regex=True)
+# # valid["cleaned_caption"] = valid["Caption"].str.replace(r'\b[a-zA-Z] \b', '', regex=True)
+#
+# # lower characters
+# df['cleaned_caption'] = df['cleaned_caption'].apply(str.lower)
+# # valid['cleaned_caption'] = valid['cleaned_caption'].apply(str.lower)
+#
+# print('-'*60)
+# print(df['Caption'][:4])
+# print(df['cleaned_caption'][:4])
+# print('-'*60)
+# # Get maximum length of caption sequence
+# df['cleaned_caption'] = df['cleaned_caption'].apply(lambda caption : ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + ['<end>'])
+# df['seq_len'] = df['cleaned_caption'].apply(lambda x : len(x))
+# max_seq_len = df['seq_len'].max()
+# print(f"Maximum length of sequence: {max_seq_len}")
+# print('-'*60)
+# print(f"Data with caption sequence length more than 45")
+# print(df[df['seq_len'] > 45])
+# print('-'*60)
+# print(f"Tokenized caption:- ")
+# print(df['cleaned_caption'][0])
+# df.drop(['seq_len'], axis = 1, inplace = True)
+# print('-'*60)
+#
+# df['seq_len'] = df['cleaned_caption'].apply(lambda x : len(x))
+# # Considering the max sequence length to be 46
+# for i in range(len(df['cleaned_caption'])):
+#     if "" in df['cleaned_caption'][i]:
+#         df.iloc[i]['cleaned_caption']=df['cleaned_caption'][i].remove("")
+#
+#     if(len(df['cleaned_caption'][i])>46):
+#         temp =df['cleaned_caption'][i]
+#         temp = temp[:45]
+#         temp.append("<end>")
+#         df._set_value(i,'cleaned_caption',temp)
+#
+# print(df['cleaned_caption'][0])
+# df['seq_len'] = df['cleaned_caption'].apply(lambda x : len(x))
+# max_seq_len = df['seq_len'].max()
+# print(f"Maximum length of sequence: {max_seq_len}")
+# df.drop(['seq_len'], axis = 1, inplace = True)
+# df['cleaned_caption'] = df['cleaned_caption'].apply(lambda caption : caption + ['<pad>']*(max_seq_len-len(caption)) )
+#
+# # Create Vocabulary
+# word_list = df['cleaned_caption'].apply(lambda x : " ".join(x)).str.cat(sep = ' ').split(' ')
+# word_dict = Counter(word_list)
+# word_dict =  sorted(word_dict, key=word_dict.get, reverse=True)
+#
+# print('-'*60)
+# print(f"Length of word dict: {len(word_dict)}")
+# vocab_size = len(word_dict)
+# print(f"Vocab Size: {vocab_size}")
+# print('-'*60)
+#
+# # word to indexing
+# index_to_word = {index: word for index, word in enumerate(word_dict)}
+# word_to_index = {word: index for index, word in enumerate(word_dict)}
+# # print(len(index_to_word), len(word_to_index))
+#
+# # Covert sequence of tokens to IDs
+# df['text_seq']  = df['cleaned_caption'].apply(lambda caption : [word_to_index[word] for word in caption] )
+# print(df.head(5))
+# print('-'*60)
+#
+# # Train-Validation split
+# print('-'*60)
+# train = df[:20560]
+# valid = df[20560:]
+# valid.reset_index(inplace=True,drop=True)
+# print("Train DF: ")
+# print(train.tail(3))
+# print("Validation DF: ")
+# print(valid.head(3))
+# print(type(train), len(train))
+# print(type(valid), len(valid))
+# print('-'*60)
 
 #############################################################################################################
-print("--IMAGE PROCESSING--")
-train_trnsform=transforms.Compose([
-    # transforms.ToPILImage(),
-    transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
-    # transforms.RandomRotation(degrees=45),
-    # transforms.RandomHorizontalFlip(),
-    # transforms.RandomPerspective(),
-    # transforms.RandomVerticalFlip(),
-    # transforms.RandomInvert(0.5),
-    # transforms.RandomAdjustSharpness(0.5),
-    # transforms.ColorJitter(),
-    # transforms.Grayscale(),
-    transforms.ToTensor(),
-    # transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-    # transforms.Normalize(torch.Tensor(mean),torch.Tensor(std))
-])
-val_trnsform=transforms.Compose([
-    # transforms.ToPILImage(),
-    transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
-    transforms.ToTensor(),
-    # transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-    # transforms.Normalize(torch.Tensor(mean),torch.Tensor(std))
-])
+# print("--IMAGE PROCESSING--")
+# train_trnsform=transforms.Compose([
+#     # transforms.ToPILImage(),
+#     transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
+#     # transforms.RandomRotation(degrees=45),
+#     # transforms.RandomHorizontalFlip(),
+#     # transforms.RandomPerspective(),
+#     # transforms.RandomVerticalFlip(),
+#     # transforms.RandomInvert(0.5),
+#     # transforms.RandomAdjustSharpness(0.5),
+#     # transforms.ColorJitter(),
+#     # transforms.Grayscale(),
+#     transforms.ToTensor(),
+#     # transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+#     # transforms.Normalize(torch.Tensor(mean),torch.Tensor(std))
+# ])
+# val_trnsform=transforms.Compose([
+#     # transforms.ToPILImage(),
+#     transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
+#     transforms.ToTensor(),
+#     # transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+#     # transforms.Normalize(torch.Tensor(mean),torch.Tensor(std))
+# ])
 
 # class Vocabulary:
 #     def __init__(self, freq_threshold):
@@ -200,37 +212,37 @@ val_trnsform=transforms.Compose([
 #
 
 
-class CustomDataset(Dataset):
-    def __init__(self, csv_file, image_path, transform=None, freq_threshold=5):
-        self.image_path = image_path
-        self.data = pd.read_csv(csv_file)
-        self.data = self.data
-        # self.captions = self.data['Caption']
-        self.transform = transform
-
-
-    def __len__(self):
-        return len(self.data)
-
-    # def get_batch_texts(self, index):
-    #     # Fetch a batch of inputs
-    #     return self.texts[index]
-
-    def __getitem__(self, index):
-        # IMAGES
-        img_name = self.data.iloc[index, 0]
-        img_path = str(self.image_path+img_name)
-
-        img = Image.open(img_path)
-        if self.transform is not None:
-            img = self.transform(img)
-        # numericalized_caption = [self.vocab.stoi["<SOS>"]]
-        # numericalized_caption += self.vocab.numericalize(caption)
-        # numericalized_caption.append(self.vocab.stoi["<EOS>"])
-        # print(torch.tensor(numericalized_caption))
-
-        # return img, torch.tensor(numericalized_caption),img_name
-        return img,img_name
+# class CustomDataset(Dataset):
+#     def __init__(self, csv_file, image_path, transform=None, freq_threshold=5):
+#         self.image_path = image_path
+#         self.data = pd.read_csv(csv_file)
+#         self.data = self.data
+#         # self.captions = self.data['Caption']
+#         self.transform = transform
+#
+#
+#     def __len__(self):
+#         return len(self.data)
+#
+#     # def get_batch_texts(self, index):
+#     #     # Fetch a batch of inputs
+#     #     return self.texts[index]
+#
+#     def __getitem__(self, index):
+#         # IMAGES
+#         img_name = self.data.iloc[index, 0]
+#         img_path = str(self.image_path+img_name)
+#
+#         img = Image.open(img_path)
+#         if self.transform is not None:
+#             img = self.transform(img)
+#         # numericalized_caption = [self.vocab.stoi["<SOS>"]]
+#         # numericalized_caption += self.vocab.numericalize(caption)
+#         # numericalized_caption.append(self.vocab.stoi["<EOS>"])
+#         # print(torch.tensor(numericalized_caption))
+#
+#         # return img, torch.tensor(numericalized_caption),img_name
+#         return img,img_name
 
 # class MyCollate:
 #     def __init__(self, pad_idx):
@@ -250,9 +262,9 @@ class CustomDataset(Dataset):
 
 # Train dataset
 
-train_image_dataset = CustomDataset(train_file_path, train_image_path, transform = train_trnsform)
-# pad_idx = train_image_dataset.vocab.stoi["<PAD>"]
-train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=False)
+# train_image_dataset = CustomDataset(train_file_path, train_image_path, transform = train_trnsform)
+# # pad_idx = train_image_dataset.vocab.stoi["<PAD>"]
+# train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=False)
 # train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=True, collate_fn=MyCollate(pad_idx=pad_idx))
 
 # cnt=0
@@ -268,9 +280,9 @@ train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=F
 
 # validation dataset
 
-val_image_dataset = CustomDataset(val_file_path, val_image_path, transform = val_trnsform)
-# pad_idx = val_image_dataset.vocab.stoi["<PAD>"]
-val_image_dataloader = DataLoader(val_image_dataset, batch_size=1, shuffle=False)
+# val_image_dataset = CustomDataset(val_file_path, val_image_path, transform = val_trnsform)
+# # pad_idx = val_image_dataset.vocab.stoi["<PAD>"]
+# val_image_dataloader = DataLoader(val_image_dataset, batch_size=1, shuffle=False)
 # val_image_dataloader = DataLoader(val_image_dataset, batch_size=1, shuffle=True, collate_fn=MyCollate(pad_idx=pad_idx))
 
 # for idx, (imgs, captions) in enumerate(test_dataloader):
@@ -281,53 +293,53 @@ val_image_dataloader = DataLoader(val_image_dataset, batch_size=1, shuffle=False
 
 
 # RESNET
-resnet18 = torchvision.models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(device)
-resnet18.eval()
-print(list(resnet18._modules))
+# resnet18 = torchvision.models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(device)
+# resnet18.eval()
+# print(list(resnet18._modules))
+#
+# resNet18Layer4 = resnet18._modules.get('layer4').to(device)
+#
+#
+# def get_vector(t_img):
+#     t_img = Variable(t_img)
+#     my_embedding = torch.zeros(1, 512, 7, 7)
+#
+#     def copy_data(m, i, o):
+#         my_embedding.copy_(o.data)
+#
+#     h = resNet18Layer4.register_forward_hook(copy_data)
+#     resnet18(t_img)
+#
+#     h.remove()
+#     return my_embedding
 
-resNet18Layer4 = resnet18._modules.get('layer4').to(device)
 
-
-def get_vector(t_img):
-    t_img = Variable(t_img)
-    my_embedding = torch.zeros(1, 512, 7, 7)
-
-    def copy_data(m, i, o):
-        my_embedding.copy_(o.data)
-
-    h = resNet18Layer4.register_forward_hook(copy_data)
-    resnet18(t_img)
-
-    h.remove()
-    return my_embedding
-
-
-extract_imgFtr_ResNet_train = {}
-print("Extracting features from Train set:")
-for imgs,image_name in tqdm(train_image_dataloader):
-    t_img = imgs.to(device)
-    embdg = get_vector(t_img)
-    extract_imgFtr_ResNet_train[image_name[0]] = embdg
+# extract_imgFtr_ResNet_train = {}
+# print("Extracting features from Train set:")
+# for imgs,image_name in tqdm(train_image_dataloader):
+#     t_img = imgs.to(device)
+#     embdg = get_vector(t_img)
+#     extract_imgFtr_ResNet_train[image_name[0]] = embdg
 # print(extract_imgFtr_ResNet_train)
 # print(tokenized_caption_train)
 
-a_file = open("model/EncodedImageTrainResNet.pkl", "wb")
-pickle.dump(extract_imgFtr_ResNet_train, a_file)
-a_file.close()
-
-
-
-extract_imgFtr_ResNet_valid = {}
-print("Extracting features from Validation set:")
-for imgs,image_name in tqdm(val_image_dataloader):
-    t_img = t_img.to(device)
-    embdg = get_vector(t_img)
-
-    extract_imgFtr_ResNet_valid[image_name[0]] = embdg
-
-a_file = open("model/EncodedImageValidResNet.pkl", "wb")
-pickle.dump(extract_imgFtr_ResNet_valid, a_file)
-a_file.close()
+# a_file = open("model/EncodedImageTrainResNet.pkl", "wb")
+# pickle.dump(extract_imgFtr_ResNet_train, a_file)
+# a_file.close()
+#
+#
+#
+# extract_imgFtr_ResNet_valid = {}
+# print("Extracting features from Validation set:")
+# for imgs,image_name in tqdm(val_image_dataloader):
+#     t_img = t_img.to(device)
+#     embdg = get_vector(t_img)
+#
+#     extract_imgFtr_ResNet_valid[image_name[0]] = embdg
+#
+# a_file = open("model/EncodedImageValidResNet.pkl", "wb")
+# pickle.dump(extract_imgFtr_ResNet_valid, a_file)
+# a_file.close()
 
 #################################
 class FlickerDataSetResnet():

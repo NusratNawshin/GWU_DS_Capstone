@@ -21,7 +21,7 @@ val_file_path = "../data/annotations/val.csv"
 val_image_path = "../data/images/val/"
 IMAGE_SIZE = 224
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 print("--IMAGE PROCESSING--")
@@ -48,44 +48,7 @@ val_trnsform=transforms.Compose([
     # transforms.Normalize(torch.Tensor(mean),torch.Tensor(std))
 ])
 
-# class Vocabulary:
-#     def __init__(self, freq_threshold):
-#         self.itos = {0: "<PAD>", 1: "<SOS>", 2: "<EOS>", 3: "<UNK>"}
-#         self.stoi = {"<PAD>": 0, "<SOS>": 1, "<EOS>": 2, "<UNK>": 3}
-#         self.freq_threshold = freq_threshold
-#
-#     def __len__(self):
-#         return len(self.itos)
-#
-#     @staticmethod
-#     def tokenizer_eng(text):
-#         return [tok.text.lower() for tok in spacy_eng.tokenizer(text)]
-#
-#     def build_vocabulary(self, sentence_list):
-#         frequencies = {}
-#         idx = 4
-#
-#         for sentence in sentence_list:
-#             for word in self.tokenizer_eng(sentence):
-#                 if word not in frequencies:
-#                     frequencies[word] = 1
-#
-#                 else:
-#                     frequencies[word] += 1
-#
-#                 if frequencies[word] == self.freq_threshold:
-#                     self.stoi[word] = idx
-#                     self.itos[idx] = word
-#                     idx += 1
-#
-#     def numericalize(self, text):
-#         tokenized_text = self.tokenizer_eng(text)
-#
-#         return [
-#             self.stoi[token] if token in self.stoi else self.stoi["<UNK>"]
-#             for token in tokenized_text
-#         ]
-#
+
 
 
 class CustomDataset(Dataset):
@@ -143,16 +106,7 @@ train_image_dataset = CustomDataset(train_file_path, train_image_path, transform
 train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=False)
 # train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=True, collate_fn=MyCollate(pad_idx=pad_idx))
 
-# cnt=0
-# for batch in train_dataloader:
-#     print(f"batch {cnt}")
-#     images, labels = batch
-#     cnt +=1
-    # Do something with the data
 
-# for idx, (imgs, captions,image_name) in enumerate(train_dataloader):
-#     print(image_name)
-#     print(captions.shape)
 
 # validation dataset
 
