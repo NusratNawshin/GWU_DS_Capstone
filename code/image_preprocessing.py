@@ -1,25 +1,20 @@
 # IMPORTS
 import math
-import re
+import random
 from collections import Counter
 
 import torch
 import torchvision
-import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import torch.nn as nn
-import torch.optim as optim
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader, Dataset
 from torch.autograd import Variable
-import numpy as np
 import spacy
 import pandas as pd
 from PIL import Image
 from torchvision.models import ResNet18_Weights
-from transformers import BertTokenizer
 spacy_eng = spacy.load("en_core_web_sm")
-from torch.nn.utils.rnn import pad_sequence
 from tqdm import tqdm
 import pickle
 torch.manual_seed(17)
@@ -32,7 +27,7 @@ val_file_path = "../data/annotations/val.csv"
 val_image_path = "../data/images/val/"
 
 
-max_seq_len = 33
+max_seq_len = 46
 IMAGE_SIZE = 224
 EPOCH = 30
 
@@ -209,7 +204,7 @@ class CustomDataset(Dataset):
     def __init__(self, csv_file, image_path, transform=None, freq_threshold=5):
         self.image_path = image_path
         self.data = pd.read_csv(csv_file)
-        self.data = self.data[:64]
+        self.data = self.data
         # self.captions = self.data['Caption']
         self.transform = transform
 
@@ -308,14 +303,11 @@ def get_vector(t_img):
 
 
 extract_imgFtr_ResNet_train = {}
-# tokenized_caption_train = {}
 print("Extracting features from Train set:")
 for imgs,image_name in tqdm(train_image_dataloader):
-# for image_name, t_img in tqdm(train_dataloader):
     t_img = imgs.to(device)
     embdg = get_vector(t_img)
     extract_imgFtr_ResNet_train[image_name[0]] = embdg
-    # tokenized_caption_train[image_name[0]] = caption
 # print(extract_imgFtr_ResNet_train)
 # print(tokenized_caption_train)
 
@@ -326,14 +318,12 @@ a_file.close()
 
 
 extract_imgFtr_ResNet_valid = {}
-# extract_capFtr_ResNet_valid = {}
 print("Extracting features from Validation set:")
 for imgs,image_name in tqdm(val_image_dataloader):
     t_img = t_img.to(device)
     embdg = get_vector(t_img)
 
     extract_imgFtr_ResNet_valid[image_name[0]] = embdg
-    # extract_capFtr_ResNet_valid[image_name[0]] = embdg
 
 a_file = open("model/EncodedImageValidResNet.pkl", "wb")
 pickle.dump(extract_imgFtr_ResNet_valid, a_file)
@@ -360,14 +350,14 @@ class FlickerDataSetResnet():
         return torch.tensor(caption), torch.tensor(target_seq), image_tensor_view
 
 
-train_dataset_resnet = FlickerDataSetResnet(train[:64], 'model/EncodedImageTrainResNet.pkl')
+train_dataset_resnet = FlickerDataSetResnet(train, 'model/EncodedImageTrainResNet.pkl')
 train_dataloader_resnet = DataLoader(train_dataset_resnet, batch_size = 32, shuffle=True)
 
 
 # Validation set preprocessing
 
 
-valid_dataset_resnet = FlickerDataSetResnet(valid[:64], 'model/EncodedImageValidResNet.pkl')
+valid_dataset_resnet = FlickerDataSetResnet(valid, 'model/EncodedImageValidResNet.pkl')
 valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size = 32, shuffle=True)
 
 # for idx, (imgs, captions,image_name) in enumerate(train_dataloader_resnet):
@@ -513,12 +503,13 @@ for epoch in tqdm(range(EPOCH)):
 
     total_epoch_valid_loss = total_epoch_valid_loss / total_valid_words
 
-    print("Epoch -> ", epoch, " Training Loss -> ", total_epoch_train_loss.item(), "Eval Loss -> ",
-          total_epoch_valid_loss.item())
+    # print("Epoch -> ", epoch, " Training Loss -> ", total_epoch_train_loss.item(), "Eval Loss -> ",
+    #       total_epoch_valid_loss.item())
+    print(f"Epoch -> {epoch},  Training Loss -> {total_epoch_train_loss.item():.3f} Eval Loss -> {total_epoch_valid_loss.item():.3f}")
 
     if min_val_loss > total_epoch_valid_loss:
         print("Writing Model at epoch ", epoch)
-        torch.save(ictModel, './BestModel')
+        torch.save(ictModel, 'model/BestModel')
         min_val_loss = total_epoch_valid_loss
 
     scheduler.step(total_epoch_valid_loss.item())
@@ -527,7 +518,64 @@ for epoch in tqdm(range(EPOCH)):
 #                    Generate Caption
 ###############################################################
 
+model = torch.load('model/BestModel')
+start_token = word_to_index['<start>']
+end_token = word_to_index['<end>']
+pad_token = word_to_index['<pad>']
+max_seq_len = 46
+print(start_token, end_token, pad_token)
 
+
+valid_img_embed = pd.read_pickle('model/EncodedImageValidResNet.pkl')
+
+def generate_caption(K, img_nm, img_loc):
+    img_loc = img_loc+str(img_nm)
+    image = Image.open(img_loc).convert("RGB")
+    plt.imshow(image)
+
+    model.eval()
+    valid_img_df = valid[valid['Name']==img_nm]
+    print("Actual Caption : ")
+    print(valid_img_df['Caption'])
+    img_embed = valid_img_embed[img_nm].to(device)
+
+
+    img_embed = img_embed.permute(0,2,3,1)
+    img_embed = img_embed.view(img_embed.size(0), -1, img_embed.size(3))
+
+
+    input_seq = [pad_token]*max_seq_len
+    input_seq[0] = start_token
+
+    input_seq = torch.tensor(input_seq).unsqueeze(0).to(device)
+    predicted_sentence = []
+    with torch.no_grad():
+        # for eval_iter in range(0, max_seq_len):
+        for eval_iter in range(0, max_seq_len-1):
+
+            output, padding_mask = model.forward(img_embed, input_seq)
+
+            output = output[eval_iter, 0, :]
+
+            values = torch.topk(output, K).values.tolist()
+            indices = torch.topk(output, K).indices.tolist()
+
+            next_word_index = random.choices(indices, values, k = 1)[0]
+
+            next_word = index_to_word[next_word_index]
+
+            input_seq[:, eval_iter+1] = next_word_index
+
+
+            if next_word == '<end>' :
+                break
+
+            predicted_sentence.append(next_word)
+    print("\n")
+    print("Predicted caption : ")
+    print(" ".join(predicted_sentence+['.']))
+
+generate_caption(1, valid.iloc[50]['Name'], val_image_path)
 
 # ### REFERENCES
 #     # https://github.com/aladdinpersson/Machine-Learning-Collection/blob/master/ML/Pytorch/Basics/custom_dataset_txt/loader_customtext.py
