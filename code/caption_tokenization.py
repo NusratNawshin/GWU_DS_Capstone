@@ -16,11 +16,6 @@ val_image_path = "../data/images/val/"
 
 ###
 
-
-
-
-
-
 def token_generation():
     # TRAIN
     train = pd.read_csv(train_file_path, sep=',', skipinitialspace=True)

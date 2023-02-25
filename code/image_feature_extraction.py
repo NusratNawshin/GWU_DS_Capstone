@@ -55,7 +55,7 @@ class CustomDataset(Dataset):
     def __init__(self, csv_file, image_path, transform=None, freq_threshold=5):
         self.image_path = image_path
         self.data = pd.read_csv(csv_file)
-        self.data = self.data
+        self.data = self.data[:32]
         # self.captions = self.data['Caption']
         self.transform = transform
 
@@ -153,9 +153,9 @@ for imgs,image_name in tqdm(train_image_dataloader):
 # print(extract_imgFtr_ResNet_train)
 # print(tokenized_caption_train)
 
-a_file = open("model/EncodedImageTrainResNet.pkl", "wb")
-pickle.dump(extract_imgFtr_ResNet_train, a_file)
-a_file.close()
+# a_file = open("model/EncodedImageTrainResNet.pkl", "wb")
+# pickle.dump(extract_imgFtr_ResNet_train, a_file)
+# a_file.close()
 
 
 
@@ -164,9 +164,10 @@ print("Extracting features from Validation set:")
 for imgs,image_name in tqdm(val_image_dataloader):
     t_img = t_img.to(device)
     embdg = get_vector(t_img)
+    print(embdg[0][0])
 
     extract_imgFtr_ResNet_valid[image_name[0]] = embdg
 
-a_file = open("model/EncodedImageValidResNet.pkl", "wb")
+a_file = open("model/EncodedImageValidResNettest.pkl", "wb")
 pickle.dump(extract_imgFtr_ResNet_valid, a_file)
 a_file.close()
