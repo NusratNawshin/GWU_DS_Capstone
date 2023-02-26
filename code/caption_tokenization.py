@@ -2,8 +2,11 @@
 import pickle
 from collections import Counter
 import torch
+import wordninja
 import spacy
 import pandas as pd
+import spacy
+
 spacy_eng = spacy.load("en_core_web_sm")
 torch.manual_seed(17)
 
@@ -16,53 +19,96 @@ val_image_path = "../data/images/val/"
 
 ###
 
+def word_separator(df):
+    for i in range(len(df)):
+    # for i in range(5):
+        text=df['Caption'][i]
+        words=text.split(' ')
+        # print(words)
+        caption=""
+        for word in words:
+            result=wordninja.split(word)
+            # print(result)
+            if(len(result)>1):
+                for j in range(len(result)):
+                    caption+=result[j]+" "
+            elif(len(result)==1):
+                caption += result[0] + " "
+        df.loc[i,'Caption']= caption
 def token_generation():
     # TRAIN
     train = pd.read_csv(train_file_path, sep=',', skipinitialspace=True)
     print(f"Length of Train set: {len(train)}")
-    print(train.tail(3))
+    word_separator(train)
     # VAL
     valid = pd.read_csv(val_file_path)
     print(f"Length of validation set: {len(valid)}")
-    print(valid.head(3))
+    # print(valid.head(3))
+    word_separator(valid)
 
     #################################
     # Concat train & validation dataframes
 
     df = pd.concat([train, valid], ignore_index=True)
     print(f"Length of total df: {len(df)}")
-    print(df[20559:20563])
-    print('-' * 60)
-    print('-' * 60)
+    # print(df[20559:20563])
+    # print('-' * 60)
+    # print('-' * 60)
     #################################
     # # CAPTION PREPROCESSING
 
     # remove single character
     df["cleaned_caption"] = df["Caption"].str.replace(r'\b[a-zA-Z] \b', '', regex=True)
-    # valid["cleaned_caption"] = valid["Caption"].str.replace(r'\b[a-zA-Z] \b', '', regex=True)
-
+    # remove punctuations
+    df["cleaned_caption"] = df["cleaned_caption"].str.replace(r'[^\w\s]', '', regex=True)
     # lower characters
     df['cleaned_caption'] = df['cleaned_caption'].apply(str.lower)
-    # valid['cleaned_caption'] = valid['cleaned_caption'].apply(str.lower)
+
+    # print('-' * 60)
+    print(df['Caption'][:4])
+    print(df['cleaned_caption'][:4])
+    print('-' * 60)
+
+
+    # tokenization
+    # Creating blank language object then
+    # tokenizing words of the sentence
+    # nlp = spacy.blank("en")
+    #
+    # df['cleaned_caption'] = df['cleaned_caption'].apply(lambda x: [t.text for t in nlp.tokenizer(x)])
+
+    # print('-' * 60)
+    # print(df['Caption'][:4])
+    # print(df['cleaned_caption'][:4])
+    # print('-' * 60)
+
+    # # Get maximum length of caption sequence
+    # df['cleaned_caption'] = df['cleaned_caption'].apply(
+    #     lambda caption: ['<start>'] + caption + ['<end>'])
+
+    # Get maximum length of caption sequence
+    df['cleaned_caption'] = df['cleaned_caption'].apply(
+        lambda caption: ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
+            '<end>'])
 
     print('-' * 60)
     print(df['Caption'][:4])
     print(df['cleaned_caption'][:4])
     print('-' * 60)
-    # Get maximum length of caption sequence
-    df['cleaned_caption'] = df['cleaned_caption'].apply(
-        lambda caption: ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
-            '<end>'])
+
     df['seq_len'] = df['cleaned_caption'].apply(lambda x: len(x))
     max_seq_len = df['seq_len'].max()
     print(f"Maximum length of sequence: {max_seq_len}")
+
     print('-' * 60)
     print(f"Data with caption sequence length more than 45")
     print(df[df['seq_len'] > 45])
     print('-' * 60)
+
     print(f"Tokenized caption:- ")
     print(df['cleaned_caption'][0])
     df.drop(['seq_len'], axis=1, inplace=True)
+
     print('-' * 60)
     df['seq_len'] = df['cleaned_caption'].apply(lambda x: len(x))
     # Considering the max sequence length to be 46
@@ -88,7 +134,7 @@ def token_generation():
     word_list = df['cleaned_caption'].apply(lambda x: " ".join(x)).str.cat(sep=' ').split(' ')
     word_dict = Counter(word_list)
     word_dict = sorted(word_dict, key=word_dict.get, reverse=True)
-
+    # print(word_dict)
     print('-' * 60)
     print(f"Length of word dict: {len(word_dict)}")
     vocab_size = len(word_dict)
@@ -115,14 +161,15 @@ def token_generation():
     # Train-Validation split
     print('-' * 60)
     train = df[:20560]
+    # print(train['Caption'][0])
     valid = df[20560:]
     valid.reset_index(inplace=True, drop=True)
-    print("Train DF: ")
-    print(train.tail(3))
-    print("Validation DF: ")
-    print(valid.head(3))
-    print(type(train), len(train))
-    print(type(valid), len(valid))
+    # print("Train DF: ")
+    # print(train.tail(3))
+    # print("Validation DF: ")
+    # print(valid.head(3))
+    # print(type(train), len(train))
+    # print(type(valid), len(valid))
     print('-' * 60)
     vocab_file = open("model/vocabsize.pkl", "wb")
     pickle.dump(vocabSize, vocab_file)
@@ -134,6 +181,7 @@ def token_generation():
 
 if __name__ == "__main__":
     train,valid=token_generation()
+
     train.to_csv('../data/tokenized_annotation/train.csv', index=False)
     valid.to_csv('../data/tokenized_annotation/val.csv', index=False)
     # Save the token into a pickle file
@@ -144,3 +192,7 @@ if __name__ == "__main__":
     valpkl = open("../data/tokenized_annotation/val.pkl", "wb")
     pickle.dump(valid, valpkl)
     valpkl.close()
+
+
+# REFERENCES
+# https://stackoverflow.com/questions/8870261/how-to-split-text-without-spaces-into-list-of-words

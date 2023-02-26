@@ -52,72 +52,41 @@ val_trnsform=transforms.Compose([
 
 
 class CustomDataset(Dataset):
-    def __init__(self, csv_file, image_path, transform=None, freq_threshold=5):
+    def __init__(self, csv_file, image_path, transform=None):
         self.image_path = image_path
         self.data = pd.read_csv(csv_file)
-        self.data = self.data[:32]
-        # self.captions = self.data['Caption']
+        # self.data = self.data[:32]
         self.transform = transform
 
 
     def __len__(self):
         return len(self.data)
 
-    # def get_batch_texts(self, index):
-    #     # Fetch a batch of inputs
-    #     return self.texts[index]
 
     def __getitem__(self, index):
         # IMAGES
         img_name = self.data.iloc[index, 0]
         img_path = str(self.image_path+img_name)
-
         img = Image.open(img_path)
         if self.transform is not None:
             img = self.transform(img)
-        # numericalized_caption = [self.vocab.stoi["<SOS>"]]
-        # numericalized_caption += self.vocab.numericalize(caption)
-        # numericalized_caption.append(self.vocab.stoi["<EOS>"])
-        # print(torch.tensor(numericalized_caption))
-
-        # return img, torch.tensor(numericalized_caption),img_name
         return img,img_name
 
-# class MyCollate:
-#     def __init__(self, pad_idx):
-#         self.pad_idx = pad_idx
-#
-#     def __call__(self, batch):
-#         imgs = [item[0].unsqueeze(0) for item in batch]
-#         imgs = torch.cat(imgs, dim=0)
-#         targets = [item[1] for item in batch]
-#         print(targets)
-#         targets = pad_sequence(targets, batch_first=False, padding_value=self.pad_idx)
-#         img_name = [item[2] for item in batch]
-#         print("AFTER PADDING")
-#         print(targets)
-#
-#         return imgs, targets, img_name
+
 
 # Train dataset
 
 train_image_dataset = CustomDataset(train_file_path, train_image_path, transform = train_trnsform)
-# pad_idx = train_image_dataset.vocab.stoi["<PAD>"]
 train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=False)
-# train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=True, collate_fn=MyCollate(pad_idx=pad_idx))
+
 
 
 
 # validation dataset
 
 val_image_dataset = CustomDataset(val_file_path, val_image_path, transform = val_trnsform)
-# pad_idx = val_image_dataset.vocab.stoi["<PAD>"]
 val_image_dataloader = DataLoader(val_image_dataset, batch_size=1, shuffle=False)
-# val_image_dataloader = DataLoader(val_image_dataset, batch_size=1, shuffle=True, collate_fn=MyCollate(pad_idx=pad_idx))
 
-# for idx, (imgs, captions) in enumerate(test_dataloader):
-#     print(imgs.shape)
-#     print(captions.shape)
 
 
 
@@ -153,21 +122,21 @@ for imgs,image_name in tqdm(train_image_dataloader):
 # print(extract_imgFtr_ResNet_train)
 # print(tokenized_caption_train)
 
-# a_file = open("model/EncodedImageTrainResNet.pkl", "wb")
-# pickle.dump(extract_imgFtr_ResNet_train, a_file)
-# a_file.close()
+a_file = open("model/EncodedImageTrainResNet.pkl", "wb")
+pickle.dump(extract_imgFtr_ResNet_train, a_file)
+a_file.close()
 
 
 
 extract_imgFtr_ResNet_valid = {}
 print("Extracting features from Validation set:")
 for imgs,image_name in tqdm(val_image_dataloader):
-    t_img = t_img.to(device)
+    t_img = imgs.to(device)
     embdg = get_vector(t_img)
-    print(embdg[0][0])
+    # print(embdg[0][0])
 
     extract_imgFtr_ResNet_valid[image_name[0]] = embdg
 
-a_file = open("model/EncodedImageValidResNettest.pkl", "wb")
+a_file = open("model/EncodedImageValidResNet.pkl", "wb")
 pickle.dump(extract_imgFtr_ResNet_valid, a_file)
 a_file.close()

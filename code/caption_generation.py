@@ -52,9 +52,12 @@ print(device)
 # VAL
 # valid = pd.read_csv(val_file_path)
 valid = pd.read_pickle(val_file_path)
-# valid=valid[:32]
+valid=valid[:5]
+# print(valid.columns)
+# for i in range(len(valid)):
+#     print(valid[i])
 print(f"Length of validation set: {len(valid)}")
-print(valid.head(3))
+# print(valid.head(3))
 
 ###############################################################
 #                    Generate Caption
@@ -65,11 +68,11 @@ start_token = word_to_index['<start>']
 end_token = word_to_index['<end>']
 pad_token = word_to_index['<pad>']
 max_seq_len = 46
-print(start_token, end_token, pad_token)
+# print(start_token, end_token, pad_token)
 
 
 valid_img_embed = pd.read_pickle('model/EncodedImageValidResNet.pkl')
-print(valid_img_embed)
+# print(valid_img_embed)
 
 def generate_caption(K, img_nm, img_loc):
     # img_loc = img_loc+str(img_nm)
@@ -77,11 +80,17 @@ def generate_caption(K, img_nm, img_loc):
     # plt.imshow(image)
 
     model.eval()
-    valid_img_df = valid[valid['Name']==img_nm]
+    # valid_img_df = valid[valid['Name']==img_nm]
+    # print(valid.query('Name==@img_nm')["index"])
+    # print(valid.index[valid["Name"]==img_nm].tolist())
+    captionindex=valid.index[valid["Name"]==img_nm].tolist()
+    # print(valid["Caption"][indexs[0]])
+    actual_caption=valid["Caption"][captionindex[0]]
+
     # print("Actual Caption : ")
+    # print(valid_img_df)
+    # actual_caption=valid_img_df['Caption'].to_string(index=False)
     # print(valid_img_df['Caption'])
-    actual_caption=valid_img_df['Caption'].to_string(index=False)
-    # print(actual_caption)
     img_embed = valid_img_embed[img_nm].to(device)
     # print(img_embed)
 
@@ -97,7 +106,7 @@ def generate_caption(K, img_nm, img_loc):
     predicted_sentence = []
     with torch.no_grad():
         # for eval_iter in range(0, max_seq_len):
-        for eval_iter in range(0, max_seq_len-1):
+        for eval_iter in range(0, max_seq_len):
 
             output, padding_mask = model.forward(img_embed, input_seq)
 
@@ -105,10 +114,12 @@ def generate_caption(K, img_nm, img_loc):
 
             values = torch.topk(output, K).values.tolist()
             indices = torch.topk(output, K).indices.tolist()
+            print(values)
 
             next_word_index = random.choices(indices, values, k = 1)[0]
 
             next_word = index_to_word[next_word_index]
+            print(next_word)
 
             input_seq[:, eval_iter+1] = next_word_index
 
@@ -124,8 +135,8 @@ def generate_caption(K, img_nm, img_loc):
     return [img_nm,actual_caption, predicted_sentence]
 
 predictions=[]
-# for i in range(len(valid)):
-for i in range(0, 10):
+for i in range(len(valid)):
+# for i in range(0, 10):
     pred = generate_caption(1, valid.iloc[i]['Name'], val_image_path)
     print(valid.iloc[i]['Name'])
     print(pred)
