@@ -26,7 +26,7 @@ vocab_size=vocabs["vocab_size"]
 
 # max_seq_len = 46
 IMAGE_SIZE = 224
-EPOCH = 60
+EPOCH = 30
 
 ###
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -44,8 +44,10 @@ class FlickerDataSetResnet():
     def __getitem__(self, idx):
         caption = self.data.iloc[idx]['text_seq']
         target_seq = caption[1:] + [0]
-
+        # target_seq = caption
         image_name = self.data.iloc[idx]['Name']
+        # print(image_name)
+        # print(caption)
         image_tensor = self.encodedImgs[image_name]
         image_tensor = image_tensor.permute(0, 2, 3, 1)
         image_tensor_view = image_tensor.view(image_tensor.size(0), -1, image_tensor.size(3))
@@ -159,8 +161,9 @@ def train():
     valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size=32, shuffle=True)
 
     # MODEL TRAIN
-    ictModel = ImageCaptionModel(16, 4, vocab_size, 512).to(device)
-    optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
+    ictModel = ImageCaptionModel(32, 8, vocab_size, 512).to(device)
+    # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
+    optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.0001)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=2, verbose=True)
     criterion = torch.nn.CrossEntropyLoss(reduction='none')
     min_val_loss = float('Inf')
@@ -178,7 +181,9 @@ def train():
 
             image_embed = image_embed.squeeze(1).to(device)
             caption_seq = caption_seq.to(device)
+            # print(caption_seq)
             target_seq = target_seq.to(device)
+            # print(target_seq)
 
             output, padding_mask = ictModel.forward(image_embed, caption_seq)
             output = output.permute(1, 2, 0)
@@ -232,83 +237,6 @@ def train():
 
 if __name__ == "__main__":
     train()
-
-
-# ###############################################################
-# #                    Generate Caption
-# ###############################################################
-#
-# model = torch.load('model/BestModel')
-# start_token = word_to_index['<start>']
-# end_token = word_to_index['<end>']
-# pad_token = word_to_index['<pad>']
-# max_seq_len = 46
-# print(start_token, end_token, pad_token)
-#
-#
-# valid_img_embed = pd.read_pickle('model/EncodedImageValidResNet.pkl')
-#
-# def generate_caption(K, img_nm, img_loc):
-#     img_loc = img_loc+str(img_nm)
-#     image = Image.open(img_loc).convert("RGB")
-#     plt.imshow(image)
-#
-#     model.eval()
-#     valid_img_df = valid[valid['Name']==img_nm]
-#     # print("Actual Caption : ")
-#     # print(valid_img_df['Caption'])
-#     actual_caption=valid_img_df['Caption'].to_string(index=False)
-#     # print(actual_caption)
-#     img_embed = valid_img_embed[img_nm].to(device)
-#
-#
-#     img_embed = img_embed.permute(0,2,3,1)
-#     img_embed = img_embed.view(img_embed.size(0), -1, img_embed.size(3))
-#
-#
-#     input_seq = [pad_token]*max_seq_len
-#     input_seq[0] = start_token
-#
-#     input_seq = torch.tensor(input_seq).unsqueeze(0).to(device)
-#     predicted_sentence = []
-#     with torch.no_grad():
-#         # for eval_iter in range(0, max_seq_len):
-#         for eval_iter in range(0, max_seq_len-1):
-#
-#             output, padding_mask = model.forward(img_embed, input_seq)
-#
-#             output = output[eval_iter, 0, :]
-#
-#             values = torch.topk(output, K).values.tolist()
-#             indices = torch.topk(output, K).indices.tolist()
-#
-#             next_word_index = random.choices(indices, values, k = 1)[0]
-#
-#             next_word = index_to_word[next_word_index]
-#
-#             input_seq[:, eval_iter+1] = next_word_index
-#
-#
-#             if next_word == '<end>' :
-#                 break
-#
-#             predicted_sentence.append(next_word)
-#     # print("\n")
-#     # print("Predicted caption : ")
-#     # print(" ".join(predicted_sentence+['.']))
-#     predicted_sentence = " ".join(predicted_sentence)
-#     return [img_nm,actual_caption, predicted_sentence]
-#
-# predictions=[]
-# for i in range(0,len(valid)):
-#     pred = generate_caption(1, valid.iloc[i]['Name'], val_image_path)
-#     predictions.append(pred)
-#
-# print(predictions[0])
-#
-# pred_df = pd.DataFrame(predictions)
-#
-# pred_df.to_csv('results/results.csv', index=False)
 
 
 # ### REFERENCES

@@ -6,6 +6,7 @@ import wordninja
 import spacy
 import pandas as pd
 import spacy
+import json
 
 spacy_eng = spacy.load("en_core_web_sm")
 torch.manual_seed(17)
@@ -147,6 +148,14 @@ def token_generation():
     # word to indexing
     index_to_word = {index: word for index, word in enumerate(word_dict)}
     word_to_index = {word: index for index, word in enumerate(word_dict)}
+    # print(index_to_word)
+    # save word to index
+    # indexjson=json.dumps(index_to_word)
+    # # filejson=open("results/index2word.txt","w")
+    # filejson = open("results/index2word.json", "w")
+    # # filejson.write(str(index_to_word))
+    # filejson.write(indexjson)
+    # filejson.close()
     # print(len(index_to_word), len(word_to_index))
     vocabSize["index_to_word"] = index_to_word
     vocabSize["word_to_index"] = word_to_index

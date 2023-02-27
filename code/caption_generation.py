@@ -18,7 +18,7 @@ spacy_eng = spacy.load("en_core_web_sm")
 from tqdm import tqdm
 import pickle
 torch.manual_seed(17)
-from image_preprocessing import ImageCaptionModel,PositionalEncoding,FlickerDataSetResnet
+from train_and_validation import ImageCaptionModel,PositionalEncoding,FlickerDataSetResnet
 
 ### VARIABLES
 # train_file_path = '../data/tokenized_annotation/train.pkl'
@@ -37,7 +37,7 @@ vocab_size=vocabs["vocab_size"]
 
 # max_seq_len = 46
 IMAGE_SIZE = 224
-EPOCH = 60
+# EPOCH = 60
 
 ###
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -52,7 +52,7 @@ print(device)
 # VAL
 # valid = pd.read_csv(val_file_path)
 valid = pd.read_pickle(val_file_path)
-valid=valid[:5]
+# valid=valid[:15]
 # print(valid.columns)
 # for i in range(len(valid)):
 #     print(valid[i])
@@ -111,15 +111,23 @@ def generate_caption(K, img_nm, img_loc):
             output, padding_mask = model.forward(img_embed, input_seq)
 
             output = output[eval_iter, 0, :]
+            # print(output.tolist())
+            # print(len(output.tolist()))
+
 
             values = torch.topk(output, K).values.tolist()
             indices = torch.topk(output, K).indices.tolist()
-            print(values)
+            # print("values")
+            # print(values)
+            # print("Indices")
+            # print(indices)
 
             next_word_index = random.choices(indices, values, k = 1)[0]
-
+            # print("next word index")
+            # print(next_word_index)
             next_word = index_to_word[next_word_index]
-            print(next_word)
+            # print("next word")
+            # print(next_word)
 
             input_seq[:, eval_iter+1] = next_word_index
 
@@ -136,15 +144,14 @@ def generate_caption(K, img_nm, img_loc):
 
 predictions=[]
 for i in range(len(valid)):
-# for i in range(0, 10):
-    pred = generate_caption(1, valid.iloc[i]['Name'], val_image_path)
+# for i in range(0, 2):
+    pred = generate_caption(2, valid.iloc[i]['Name'], val_image_path)
     print(valid.iloc[i]['Name'])
     print(pred)
     predictions.append(pred)
 
 print(predictions[0])
 
-
 pred_df = pd.DataFrame(predictions)
 print(pred_df.shape)
-# pred_df.to_csv('results/results.csv', index=False)
+pred_df.to_csv('results/results.csv', index=False)
