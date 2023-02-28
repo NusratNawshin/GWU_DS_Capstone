@@ -48,13 +48,11 @@ val_trnsform=transforms.Compose([
     # transforms.Normalize(torch.Tensor(mean),torch.Tensor(std))
 ])
 
-
-
-
 class CustomDataset(Dataset):
     def __init__(self, csv_file, image_path, transform=None):
         self.image_path = image_path
         self.data = pd.read_csv(csv_file)
+        self.data = self.data[['Name']].drop_duplicates()
         # self.data = self.data[:32]
         self.transform = transform
 
@@ -71,7 +69,6 @@ class CustomDataset(Dataset):
         if self.transform is not None:
             img = self.transform(img)
         return img,img_name
-
 
 
 # Train dataset

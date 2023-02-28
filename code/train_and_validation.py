@@ -26,7 +26,7 @@ vocab_size=vocabs["vocab_size"]
 
 # max_seq_len = 46
 IMAGE_SIZE = 224
-EPOCH = 30
+EPOCH = 20
 
 ###
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -161,9 +161,9 @@ def train():
     valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size=32, shuffle=True)
 
     # MODEL TRAIN
-    ictModel = ImageCaptionModel(32, 8, vocab_size, 512).to(device)
+    ictModel = ImageCaptionModel(16, 4, vocab_size, 512).to(device)
     # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
-    optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.0001)
+    optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=2, verbose=True)
     criterion = torch.nn.CrossEntropyLoss(reduction='none')
     min_val_loss = float('Inf')

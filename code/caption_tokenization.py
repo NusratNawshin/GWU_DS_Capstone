@@ -169,9 +169,9 @@ def token_generation():
 
     # Train-Validation split
     print('-' * 60)
-    train = df[:20560]
+    train = df[:len(train)]
     # print(train['Caption'][0])
-    valid = df[20560:]
+    valid = df[len(train):]
     valid.reset_index(inplace=True, drop=True)
     # print("Train DF: ")
     # print(train.tail(3))

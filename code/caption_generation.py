@@ -52,7 +52,8 @@ print(device)
 # VAL
 # valid = pd.read_csv(val_file_path)
 valid = pd.read_pickle(val_file_path)
-# valid=valid[:15]
+unique_valid = valid[['Name']].drop_duplicates()
+# unique_valid=unique_valid[:15]
 # print(valid.columns)
 # for i in range(len(valid)):
 #     print(valid[i])
@@ -85,7 +86,10 @@ def generate_caption(K, img_nm, img_loc):
     # print(valid.index[valid["Name"]==img_nm].tolist())
     captionindex=valid.index[valid["Name"]==img_nm].tolist()
     # print(valid["Caption"][indexs[0]])
-    actual_caption=valid["Caption"][captionindex[0]]
+    # print(captionindex)
+    actual_caption=[]
+    for i in range(len(captionindex)):
+        actual_caption.append(valid["Caption"][captionindex[i]])
 
     # print("Actual Caption : ")
     # print(valid_img_df)
@@ -106,7 +110,7 @@ def generate_caption(K, img_nm, img_loc):
     predicted_sentence = []
     with torch.no_grad():
         # for eval_iter in range(0, max_seq_len):
-        for eval_iter in range(0, max_seq_len):
+        for eval_iter in range(0, max_seq_len-1):
 
             output, padding_mask = model.forward(img_embed, input_seq)
 
@@ -143,14 +147,19 @@ def generate_caption(K, img_nm, img_loc):
     return [img_nm,actual_caption, predicted_sentence]
 
 predictions=[]
-for i in range(len(valid)):
+for i in range(len(unique_valid)):
 # for i in range(0, 2):
-    pred = generate_caption(2, valid.iloc[i]['Name'], val_image_path)
-    print(valid.iloc[i]['Name'])
-    print(pred)
+    pred = generate_caption(1, unique_valid.iloc[i]['Name'], val_image_path)
+    # print(unique_valid.iloc[i]['Name'])
+    # print(pred)
+    print("-"*50)
+    print("Image Name: "+pred[0])
+    print("Actual Caption: "+str(pred[1]))
+    print("Predicted Caption: "+pred[2])
+    print("-"*50)
     predictions.append(pred)
 
-print(predictions[0])
+# print(predictions[0])
 
 pred_df = pd.DataFrame(predictions)
 print(pred_df.shape)
