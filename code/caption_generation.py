@@ -144,9 +144,13 @@ def generate_caption(K, img_nm, img_loc):
     # print("Predicted caption : ")
     # print(" ".join(predicted_sentence+['.']))
     predicted_sentence = " ".join(predicted_sentence)
+    # print(type(actual_caption))
     return [img_nm,actual_caption, predicted_sentence]
 
-predictions=[]
+# predictions=[]
+image_names=[]
+actual_captions=[]
+predicted_captions=[]
 for i in range(len(unique_valid)):
 # for i in range(0, 2):
     pred = generate_caption(1, unique_valid.iloc[i]['Name'], val_image_path)
@@ -157,10 +161,18 @@ for i in range(len(unique_valid)):
     print("Actual Caption: "+str(pred[1]))
     print("Predicted Caption: "+pred[2])
     print("-"*50)
-    predictions.append(pred)
+    image_names.append(pred[0])
+    actual_captions.append(pred[1])
+    predicted_captions.append(pred[2])
 
 # print(predictions[0])
 
-pred_df = pd.DataFrame(predictions)
-print(pred_df.shape)
+pred_df = pd.DataFrame(
+    {'Name': image_names,
+     'actual_captions': actual_captions,
+     'predicted_captions': predicted_captions,
+     })
+print(pred_df.dtypes)
+# pred_df = pd.DataFrame(predictions)
+# print(pred_df.shape)
 pred_df.to_csv('results/results.csv', index=False)
