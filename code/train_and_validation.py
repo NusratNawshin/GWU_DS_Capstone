@@ -26,7 +26,7 @@ vocab_size=vocabs["vocab_size"]
 
 # max_seq_len = 46
 IMAGE_SIZE = 224
-EPOCH = 20
+EPOCH = 25
 
 ###
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -54,14 +54,6 @@ class FlickerDataSetResnet():
 
         return torch.tensor(caption), torch.tensor(target_seq), image_tensor_view
 
-
-# train_dataset_resnet = FlickerDataSetResnet(train, 'model/EncodedImageTrainResNet.pkl')
-# train_dataloader_resnet = DataLoader(train_dataset_resnet, batch_size = 32, shuffle=True)
-
-
-# # Validation set preprocessing
-# valid_dataset_resnet = FlickerDataSetResnet(valid, 'model/EncodedImageValidResNet.pkl')
-# valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size = 32, shuffle=True)
 
 # Positional Encoding
 class PositionalEncoding(nn.Module):
@@ -117,6 +109,8 @@ class ImageCaptionModel(nn.Module):
 
     def forward(self, encoded_image, decoder_inp):
         encoded_image = encoded_image.permute(1, 0, 2)
+        # print("encoder shape")
+        # print(encoded_image.shape)
 
         decoder_inp_embed = self.embedding(decoder_inp) * math.sqrt(self.embedding_size)
 
@@ -129,6 +123,12 @@ class ImageCaptionModel(nn.Module):
         decoder_input_pad_mask = decoder_input_pad_mask.to(device)
         decoder_input_pad_mask_bool = decoder_input_pad_mask_bool.to(device)
 
+        # print("decoder_inp_embed")
+        # print(decoder_inp_embed.shape)
+        # print("decoder_input_mask")
+        # print(decoder_input_mask.shape)
+        # print("decoder_input_pad_mask")
+        # print(decoder_input_pad_mask.shape)
         decoder_output = self.TransformerDecoder(tgt=decoder_inp_embed, memory=encoded_image,
                                                  tgt_mask=decoder_input_mask,
                                                  tgt_key_padding_mask=decoder_input_pad_mask_bool)
@@ -161,7 +161,10 @@ def train():
     valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size=32, shuffle=True)
 
     # MODEL TRAIN
-    ictModel = ImageCaptionModel(16, 4, vocab_size, 512).to(device)
+    # ResNET18
+    # ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
+    # ResNET50
+    ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
     # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
     optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=2, verbose=True)

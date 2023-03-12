@@ -172,7 +172,8 @@ pred_df = pd.DataFrame(
      'actual_captions': actual_captions,
      'predicted_captions': predicted_captions,
      })
-print(pred_df.dtypes)
+
+# print(pred_df.dtypes)
 # pred_df = pd.DataFrame(predictions)
 # print(pred_df.shape)
 pred_df.to_csv('results/results.csv', index=False)
