@@ -28,22 +28,22 @@ print("--IMAGE PROCESSING--")
 train_trnsform=transforms.Compose([
     # transforms.ToPILImage(),
     transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
-    transforms.RandomRotation(degrees=45),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomPerspective(),
-    transforms.RandomVerticalFlip(),
-    transforms.RandomInvert(0.5),
-    transforms.RandomAdjustSharpness(0.5),
+    # transforms.RandomRotation(degrees=45),
+    # transforms.RandomHorizontalFlip(),
+    # transforms.RandomPerspective(),
+    # transforms.RandomVerticalFlip(),
+    # transforms.RandomInvert(0.5),
+    # transforms.RandomAdjustSharpness(0.5),
     # transforms.ColorJitter(),
     # transforms.Grayscale(),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 val_trnsform=transforms.Compose([
     # transforms.ToPILImage(),
     transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 class CustomDataset(Dataset):
@@ -71,12 +71,14 @@ class CustomDataset(Dataset):
 
 # Train dataset
 train_file = pd.read_csv(train_file_path)
+# train_file = train_file[:32]
 train_file = train_file[['Name']].drop_duplicates()
 train_image_dataset = CustomDataset(train_file, train_image_path, transform = train_trnsform)
 train_image_dataloader = DataLoader(train_image_dataset, batch_size=1, shuffle=False)
 
 # validation dataset
 val_file = pd.read_csv(val_file_path)
+# val_file = val_file[:32]
 val_file = val_file[['Name']].drop_duplicates()
 val_image_dataset = CustomDataset(val_file, val_image_path, transform = val_trnsform)
 val_image_dataloader = DataLoader(val_image_dataset, batch_size=1, shuffle=False)
@@ -129,8 +131,8 @@ class CNN(nn.Module):
             # nn.MaxPool2d(kernel_size=7, stride=2),
             # Defining 2nd 2D convolution layer
             # nn.Conv2d(1024, 512, kernel_size=7, stride=1, padding=7),
-            nn.Conv2d(2048, 512, kernel_size=7, stride=1, padding=7),
-            nn.BatchNorm2d(512),
+            nn.Conv2d(2048, 512, kernel_size=7, stride=1,padding=6),
+            # nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=7, stride=1),
         )

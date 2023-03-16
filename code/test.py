@@ -43,6 +43,13 @@ unique_test = test[['Name']].drop_duplicates()
 
 print(f"Length of test set: {len(test)}")
 
+vocabs = pd.read_pickle('model/vocabsize.pkl')
+#
+index_to_word=vocabs["index_to_word"]
+word_to_index = vocabs["word_to_index"]
+max_seq_len = vocabs["max_seq_len"]
+vocab_size=vocabs["vocab_size"]
+
 ###############################################################
 #                    Extract Features
 ###############################################################
@@ -130,8 +137,8 @@ else:
                 # nn.MaxPool2d(kernel_size=7, stride=2),
                 # Defining 2nd 2D convolution layer
                 # nn.Conv2d(1024, 512, kernel_size=7, stride=1, padding=7),
-                nn.Conv2d(2048, 512, kernel_size=7, stride=1, padding=7),
-                nn.BatchNorm2d(512),
+                nn.Conv2d(2048, 512, kernel_size=7, stride=1, padding=6),
+                # nn.BatchNorm2d(512),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(kernel_size=7, stride=1),
             )
@@ -172,126 +179,126 @@ print(" --- Image Feature Extraction Done --- ")
 ###############################################################
 #                    Tokenize Caption
 ###############################################################
-
-def word_separator(df):
-    for i in range(len(df)):
-    # for i in range(5):
-        text=df['Caption'][i]
-        words=text.split(' ')
-        # print(words)
-        caption=""
-        for word in words:
-            result=wordninja.split(word)
-            # print(result)
-            if(len(result)>1):
-                for j in range(len(result)):
-                    caption+=result[j]+" "
-            elif(len(result)==1):
-                caption += result[0] + " "
-        df.loc[i,'Caption']= caption
-
-def test_token_generation():
-    word_separator(test)
-    # # CAPTION PREPROCESSING
-
-    # remove single character
-    test["cleaned_caption"] = test["Caption"].str.replace(r'\b[a-zA-Z] \b', '', regex=True)
-    # remove punctuations
-    test["cleaned_caption"] = test["cleaned_caption"].str.replace(r'[^\w\s]', '', regex=True)
-    # lower characters
-    test['cleaned_caption'] = test['cleaned_caption'].apply(str.lower)
-
-    # print('-' * 60)
-    print(test['Caption'][:4])
-    print(test['cleaned_caption'][:4])
-    print('-' * 60)
-
-    # Get maximum length of caption sequence
-    test['cleaned_caption'] = test['cleaned_caption'].apply(
-        lambda caption: ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
-            '<end>'])
-
-    print('-' * 60)
-    print(test['Caption'][:4])
-    print(test['cleaned_caption'][:4])
-    print('-' * 60)
-
-    test['seq_len'] = test['cleaned_caption'].apply(lambda x: len(x))
-    max_seq_len = test['seq_len'].max()
-    print(f"Maximum length of sequence: {max_seq_len}")
-
-    print('-' * 60)
-    print(f"Data with caption sequence length more than 45")
-    print(test[test['seq_len'] > 45])
-    print('-' * 60)
-
-    print(f"Tokenized caption:- ")
-    print(test['cleaned_caption'][0])
-    test.drop(['seq_len'], axis=1, inplace=True)
-
-    print('-' * 60)
-    test['seq_len'] = test['cleaned_caption'].apply(lambda x: len(x))
-    # Considering the max sequence length to be 46
-    for i in range(len(test['cleaned_caption'])):
-        if "" in test['cleaned_caption'][i]:
-            test.iloc[i]['cleaned_caption'] = test['cleaned_caption'][i].remove("")
-
-        if (len(test['cleaned_caption'][i]) > 46):
-            temp = test['cleaned_caption'][i]
-            temp = temp[:45]
-            temp.append("<end>")
-            test._set_value(i, 'cleaned_caption', temp)
-
-    print(test['cleaned_caption'][0])
-    test['seq_len'] = test['cleaned_caption'].apply(lambda x: len(x))
-    max_seq_len = test['seq_len'].max()
-    print(f"Maximum length of sequence: {max_seq_len}")
-    test.drop(['seq_len'], axis=1, inplace=True)
-    test['cleaned_caption'] = test['cleaned_caption'].apply(
-        lambda caption: caption + ['<pad>'] * (max_seq_len - len(caption)))
-
-    # Create Vocabulary
-    word_list = test['cleaned_caption'].apply(lambda x: " ".join(x)).str.cat(sep=' ').split(' ')
-    word_dict = Counter(word_list)
-    word_dict = sorted(word_dict, key=word_dict.get, reverse=True)
-    # print(word_dict)
-    print('-' * 60)
-    print(f"Length of word dict: {len(word_dict)}")
-    vocab_size = len(word_dict)
-    print(f"Vocab Size: {vocab_size}")
-    print('-' * 60)
-    vocabSize={}
-    vocabSize["vocab_size"]=vocab_size
-
-
-    # word to indexing
-    index_to_word = {index: word for index, word in enumerate(word_dict)}
-    word_to_index = {word: index for index, word in enumerate(word_dict)}
-    vocabSize["index_to_word"] = index_to_word
-    vocabSize["word_to_index"] = word_to_index
-    vocabSize["max_seq_len"] = max_seq_len
-
-    # Covert sequence of tokens to IDs
-    test['text_seq'] = test['cleaned_caption'].apply(lambda caption: [word_to_index[word] for word in caption])
-    print(test.head(5))
-    print('-' * 60)
-    # vocab_file = open("model/vocabsize.pkl", "wb")
-    # pickle.dump(vocabSize, vocab_file)
-    # vocab_file.close()
-
-    return test,vocabSize
-
-test_file_tokenized, vocabs = test_token_generation()
-print(" --- Caption Tokenization Done --- ")
+#
+# def word_separator(df):
+#     for i in range(len(df)):
+#     # for i in range(5):
+#         text=df['Caption'][i]
+#         words=text.split(' ')
+#         # print(words)
+#         caption=""
+#         for word in words:
+#             result=wordninja.split(word)
+#             # print(result)
+#             if(len(result)>1):
+#                 for j in range(len(result)):
+#                     caption+=result[j]+" "
+#             elif(len(result)==1):
+#                 caption += result[0] + " "
+#         df.loc[i,'Caption']= caption
+#
+# def test_token_generation():
+#     word_separator(test)
+#     # # CAPTION PREPROCESSING
+#
+#     # remove single character
+#     test["cleaned_caption"] = test["Caption"].str.replace(r'\b[a-zA-Z] \b', '', regex=True)
+#     # remove punctuations
+#     test["cleaned_caption"] = test["cleaned_caption"].str.replace(r'[^\w\s]', '', regex=True)
+#     # lower characters
+#     test['cleaned_caption'] = test['cleaned_caption'].apply(str.lower)
+#
+#     # print('-' * 60)
+#     print(test['Caption'][:4])
+#     print(test['cleaned_caption'][:4])
+#     print('-' * 60)
+#
+#     # Get maximum length of caption sequence
+#     test['cleaned_caption'] = test['cleaned_caption'].apply(
+#         lambda caption: ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
+#             '<end>'])
+#
+#     print('-' * 60)
+#     print(test['Caption'][:4])
+#     print(test['cleaned_caption'][:4])
+#     print('-' * 60)
+#
+#     test['seq_len'] = test['cleaned_caption'].apply(lambda x: len(x))
+#     max_seq_len = test['seq_len'].max()
+#     print(f"Maximum length of sequence: {max_seq_len}")
+#
+#     print('-' * 60)
+#     print(f"Data with caption sequence length more than 45")
+#     print(test[test['seq_len'] > 45])
+#     print('-' * 60)
+#
+#     print(f"Tokenized caption:- ")
+#     print(test['cleaned_caption'][0])
+#     test.drop(['seq_len'], axis=1, inplace=True)
+#
+#     print('-' * 60)
+#     test['seq_len'] = test['cleaned_caption'].apply(lambda x: len(x))
+#     # Considering the max sequence length to be 46
+#     for i in range(len(test['cleaned_caption'])):
+#         if "" in test['cleaned_caption'][i]:
+#             test.iloc[i]['cleaned_caption'] = test['cleaned_caption'][i].remove("")
+#
+#         if (len(test['cleaned_caption'][i]) > 46):
+#             temp = test['cleaned_caption'][i]
+#             temp = temp[:45]
+#             temp.append("<end>")
+#             test._set_value(i, 'cleaned_caption', temp)
+#
+#     print(test['cleaned_caption'][0])
+#     test['seq_len'] = test['cleaned_caption'].apply(lambda x: len(x))
+#     max_seq_len = test['seq_len'].max()
+#     print(f"Maximum length of sequence: {max_seq_len}")
+#     test.drop(['seq_len'], axis=1, inplace=True)
+#     test['cleaned_caption'] = test['cleaned_caption'].apply(
+#         lambda caption: caption + ['<pad>'] * (max_seq_len - len(caption)))
+#
+#     # Create Vocabulary
+#     word_list = test['cleaned_caption'].apply(lambda x: " ".join(x)).str.cat(sep=' ').split(' ')
+#     word_dict = Counter(word_list)
+#     word_dict = sorted(word_dict, key=word_dict.get, reverse=True)
+#     # print(word_dict)
+#     print('-' * 60)
+#     print(f"Length of word dict: {len(word_dict)}")
+#     vocab_size = len(word_dict)
+#     print(f"Vocab Size: {vocab_size}")
+#     print('-' * 60)
+#     vocabSize={}
+#     vocabSize["vocab_size"]=vocab_size
+#
+#
+#     # word to indexing
+#     index_to_word = {index: word for index, word in enumerate(word_dict)}
+#     word_to_index = {word: index for index, word in enumerate(word_dict)}
+#     vocabSize["index_to_word"] = index_to_word
+#     vocabSize["word_to_index"] = word_to_index
+#     vocabSize["max_seq_len"] = max_seq_len
+#
+#     # Covert sequence of tokens to IDs
+#     test['text_seq'] = test['cleaned_caption'].apply(lambda caption: [word_to_index[word] for word in caption])
+#     print(test.head(5))
+#     print('-' * 60)
+#     # vocab_file = open("model/vocabsize.pkl", "wb")
+#     # pickle.dump(vocabSize, vocab_file)
+#     # vocab_file.close()
+#
+#     return test,vocabSize
+#
+# test_file_tokenized, vocabs = test_token_generation()
+# print(" --- Caption Tokenization Done --- ")
 
 ###############################################################
 #                    Generate Caption
 ###############################################################
 
-index_to_word=vocabs["index_to_word"]
-word_to_index = vocabs["word_to_index"]
-max_seq_len = vocabs["max_seq_len"]
-vocab_size=vocabs["vocab_size"]
+# index_to_word=vocabs["index_to_word"]
+# word_to_index = vocabs["word_to_index"]
+# max_seq_len = vocabs["max_seq_len"]
+# vocab_size=vocabs["vocab_size"]
 
 model = torch.load('model/BestModel')
 start_token = word_to_index['<start>']

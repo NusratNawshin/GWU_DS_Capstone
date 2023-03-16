@@ -12,7 +12,7 @@ from torchmetrics.text.bert import BERTScore
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 smooth = SmoothingFunction().method4
-
+meteor = evaluate.load('meteor')
 
 
 
@@ -36,12 +36,22 @@ def calculate_BERT(preds,target):
     return score['f1']
 
 def calculate_BLEU(preds,target):
-    return sentence_bleu(str(preds).split(' '), str(target).split(' '), weights=(.4, .3, .2, 0.1), smoothing_function=smooth)
+    # return sentence_bleu(str(preds).split(' '), str(target).split(' '), weights=(.4, .3, .2, 0.1), smoothing_function=smooth)
+    return sentence_bleu(str(preds).split(' '), str(target).split(' '), weights=(1, 0, 0, 0), smoothing_function=smooth)
 
-def evaluation_metrices():
-    predictions = pd.read_csv('results/results.csv')
+def calculate_meteor(preds,target):
+    predictions = [preds]
+    references = [target]
+    # print(list(preds))
+    results = meteor.compute(predictions=predictions, references=references)
+    # print(results['meteor'])
+    return results['meteor']
+
+
+def evaluation_metrices(path):
+    predictions = pd.read_csv(path)
     # predictions.columns = ['Name', 'Caption', 'Predicted_Caption']
-    # predictions = predictions[:10]
+    # predictions = predictions[:20]
     print(predictions.head())
 
     image_names=[]
@@ -51,6 +61,7 @@ def evaluation_metrices():
     rougeL_fmeasure_scores = []
     bleu_scores = []
     # bert_scores = []
+    meteor_scores = []
 
     for i in range(len(predictions)):
         pred = predictions['actual_captions'][i][1:-1]
@@ -61,6 +72,8 @@ def evaluation_metrices():
         rougeL_fmeasure = []
         bleu = []
         # bert = []
+        meteor = []
+
 
         for actual_caption in actual_captions:
             actual_caption=actual_caption.replace("'",'')
@@ -73,11 +86,13 @@ def evaluation_metrices():
             # print(f"bleu: {bleu}"
             # print(len(rougeL_fmeasure))
             # bert.append(calculate_BERT(actual_caption,predictions['predicted_captions'][i]))
+            meteor.append(calculate_meteor(actual_caption, predictions))
 
         rouge2_fmeasure_scores.append(max(rouge2_fmeasure))
         rougeL_fmeasure_scores.append(max(rougeL_fmeasure))
         bleu_scores.append((max(bleu)))
         # bert_scores.append(max(bert))
+        meteor_scores.append(max(meteor))
 
     # print(rouge2_fmeasure_scores)
     # print(len(rouge2_fmeasure_scores))
@@ -92,13 +107,22 @@ def evaluation_metrices():
     scores_df["rougeL_fmeasure"]=rougeL_fmeasure_scores
     scores_df["BLEU"]=bleu_scores
     # scores_df["BERT"] = bert_scores
+    scores_df["meteor"] = meteor_scores
     return scores_df
 
 if __name__ == "__main__":
-    scores_df = evaluation_metrices()
+    print("-" * 50)
+    print("Validation")
+    print("-" * 50)
+    scores_df = evaluation_metrices('results/results.csv')
+    print("-" * 50)
+    print("Test")
+    print("-" * 50)
+    scores_df_test = evaluation_metrices('results/test_results.csv')
     print(scores_df)
 
-    scores_df.to_csv('results/scores.csv', index=False)
+    scores_df.to_csv('results/val_scores.csv', index=False)
+    scores_df_test.to_csv('results/test_scores.csv', index=False)
 
 
 
