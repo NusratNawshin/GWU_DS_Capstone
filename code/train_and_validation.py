@@ -33,7 +33,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 #################################
-class FlickerDataSetResnet():
+class DatasetLoader():
     def __init__(self, data, pkl_file):
         self.data = data
         self.encodedImgs = pd.read_pickle(pkl_file)
@@ -154,10 +154,10 @@ def train():
     print(f"Length of validation set: {len(valid)}")
     print(valid.head(3))
 
-    train_dataset_resnet = FlickerDataSetResnet(train, 'model/EncodedImageTrainResNet.pkl')
+    train_dataset_resnet = DatasetLoader(train, 'model/EncodedImageTrainResNet.pkl')
     train_dataloader_resnet = DataLoader(train_dataset_resnet, batch_size=32, shuffle=True)
 
-    valid_dataset_resnet = FlickerDataSetResnet(valid, 'model/EncodedImageValidResNet.pkl')
+    valid_dataset_resnet = DatasetLoader(valid, 'model/EncodedImageValidResNet.pkl')
     valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size=32, shuffle=True)
 
     # MODEL TRAIN

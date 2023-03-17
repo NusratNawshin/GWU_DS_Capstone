@@ -18,7 +18,7 @@ spacy_eng = spacy.load("en_core_web_sm")
 from tqdm import tqdm
 import pickle
 torch.manual_seed(17)
-from train_and_validation import ImageCaptionModel,PositionalEncoding,FlickerDataSetResnet
+from train_and_validation import ImageCaptionModel,PositionalEncoding,DatasetLoader
 
 ### VARIABLES
 # train_file_path = '../data/tokenized_annotation/train.pkl'

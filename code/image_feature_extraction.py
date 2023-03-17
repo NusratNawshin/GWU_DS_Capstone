@@ -6,8 +6,9 @@ from torch.utils.data import DataLoader, Dataset
 from torch.autograd import Variable
 import pandas as pd
 from PIL import Image
-from torchvision.models import ResNet18_Weights
-from torchvision.models import ResNet50_Weights
+# from torchvision.models import ResNet18_Weights
+# from torchvision.models import ResNet50_Weights
+from torchvision.models import VGG16_Weights
 from tqdm import tqdm
 import torch.nn as nn
 import pickle
@@ -94,57 +95,65 @@ val_image_dataloader = DataLoader(val_image_dataset, batch_size=1, shuffle=False
 # resNet18Layer4 = resnet18._modules.get('layer4').to(device)
 
 # RESNET 50
-resnet50 = torchvision.models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1).to(device)
-resnet50.eval()
-print(list(resnet50._modules))
-resNet50Layer4 = resnet50._modules.get('layer4').to(device)
+# resnet50 = torchvision.models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1).to(device)
+# resnet50.eval()
+# print(list(resnet50._modules))
+# resNet50Layer4 = resnet50._modules.get('layer4').to(device)
 
+# VGG16
+vgg16 = torchvision.models.vgg16(weights=VGG16_Weights.IMAGENET1K_V1).to(device)
+vgg16.eval()
+print(list(vgg16._modules))
+vgg16_features = vgg16._modules.get('features').to(device)
 
 def get_vector(t_img):
     t_img = Variable(t_img)
-    # my_embedding = torch.zeros(1, 512, 7, 7) # RESNET 18
-    my_embedding = torch.zeros(1, 2048, 7, 7)
+    my_embedding = torch.zeros(1, 512, 7, 7) # RESNET 18 #VGG16
+    # my_embedding = torch.zeros(1, 2048, 7, 7)
 
     def copy_data(m, i, o):
         my_embedding.copy_(o.data)
         # print(o.data.shape)
 
-    handle = resNet50Layer4.register_forward_hook(copy_data)
-    resnet50(t_img)
-
     # handle = resNet18Layer4.register_forward_hook(copy_data)
     # resnet18(t_img)
+
+    # handle = resNet50Layer4.register_forward_hook(copy_data)
+    # resnet50(t_img)
+
+    handle = vgg16_features.register_forward_hook(copy_data)
+    vgg16(t_img)
 
     handle.remove()
     # print(my_embedding.shape)
     return my_embedding
 
-class CNN(nn.Module):
-    def __init__(self):
-        super(CNN, self).__init__()
+# class CNN(nn.Module):
+#     def __init__(self):
+#         super(CNN, self).__init__()
+#
+#         self.cnn_layers = nn.Sequential(
+#             # Defining 2D convolution layer
+#             # nn.Conv2d(2048, 1024, kernel_size=7, stride=1, padding=7),
+#             # nn.BatchNorm2d(1024),
+#             # nn.ReLU(inplace=True),
+#             # nn.MaxPool2d(kernel_size=7, stride=2),
+#             # Defining 2nd 2D convolution layer
+#             # nn.Conv2d(1024, 512, kernel_size=7, stride=1, padding=7),
+#             nn.Conv2d(2048, 512, kernel_size=7, stride=1,padding=6),
+#             # nn.BatchNorm2d(512),
+#             nn.ReLU(inplace=True),
+#             nn.MaxPool2d(kernel_size=7, stride=1),
+#         )
+#
+#     # Defining the forward pass
+#     def forward(self, x):
+#         x = self.cnn_layers(x)
+#         # x = x.view(x.size(0), -1)
+#         # x = self.linear_layers(x)
+#         return x
 
-        self.cnn_layers = nn.Sequential(
-            # Defining 2D convolution layer
-            # nn.Conv2d(2048, 1024, kernel_size=7, stride=1, padding=7),
-            # nn.BatchNorm2d(1024),
-            # nn.ReLU(inplace=True),
-            # nn.MaxPool2d(kernel_size=7, stride=2),
-            # Defining 2nd 2D convolution layer
-            # nn.Conv2d(1024, 512, kernel_size=7, stride=1, padding=7),
-            nn.Conv2d(2048, 512, kernel_size=7, stride=1,padding=6),
-            # nn.BatchNorm2d(512),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=7, stride=1),
-        )
-
-    # Defining the forward pass
-    def forward(self, x):
-        x = self.cnn_layers(x)
-        # x = x.view(x.size(0), -1)
-        # x = self.linear_layers(x)
-        return x
-
-model = CNN()
+# model = CNN()
 # Loss and optimizer
 # criterion = CrossEntropyLoss()
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, weight_decay = 0.001, momentum = 0.9)
@@ -155,10 +164,10 @@ print("Extracting features from Train set:")
 for imgs,image_name in tqdm(train_image_dataloader):
     t_img = imgs.to(device)
     embdg = get_vector(t_img)
-    embd_cnn = model(embdg)
+    # embd_cnn = model(embdg)
     # print(embd_cnn.shape)
-    extract_imgFtr_ResNet_train[image_name[0]] = embd_cnn
-    # extract_imgFtr_ResNet_train[image_name[0]] = embdg # RESNET 18
+    # extract_imgFtr_ResNet_train[image_name[0]] = embd_cnn
+    extract_imgFtr_ResNet_train[image_name[0]] = embdg # RESNET 18 #VGG16
 
 # print(extract_imgFtr_ResNet_train)
 # print(tokenized_caption_train)
@@ -176,11 +185,11 @@ for imgs,image_name in tqdm(val_image_dataloader):
     t_img = imgs.to(device)
     embdg = get_vector(t_img)
 
-    embd_cnn = model(embdg)
+    # embd_cnn = model(embdg)
     # print(embd_cnn.shape)
-    extract_imgFtr_ResNet_valid[image_name[0]] = embd_cnn
+    # extract_imgFtr_ResNet_valid[image_name[0]] = embd_cnn
 
-    # extract_imgFtr_ResNet_valid[image_name[0]] = embdg    # ResNet18
+    extract_imgFtr_ResNet_valid[image_name[0]] = embdg    # ResNet18 # VGG16
 
 a_file = open("model/EncodedImageValidResNet.pkl", "wb")
 pickle.dump(extract_imgFtr_ResNet_valid, a_file)
