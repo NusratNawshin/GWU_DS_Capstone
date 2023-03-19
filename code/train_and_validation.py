@@ -25,7 +25,7 @@ max_seq_len = vocabs["max_seq_len"]
 vocab_size=vocabs["vocab_size"]
 
 # max_seq_len = 46
-IMAGE_SIZE = 224
+# IMAGE_SIZE = 224
 EPOCH = 25
 
 ###
@@ -165,8 +165,8 @@ def train():
     # ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
     # ResNET50
     ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
-    # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
     optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
+    # optimizer = torch.optim.SGD(ictModel.parameters(), lr=0.01, momentum=0.9)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=2, verbose=True)
     criterion = torch.nn.CrossEntropyLoss(reduction='none')
     min_val_loss = float('Inf')
