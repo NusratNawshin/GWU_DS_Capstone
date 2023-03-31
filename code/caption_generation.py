@@ -1,54 +1,31 @@
 # IMPORTS
-import math
 import random
-from collections import Counter
-
 import torch
-import torchvision
-import matplotlib.pyplot as plt
-import torch.nn as nn
-from torchvision import transforms, datasets
-from torch.utils.data import DataLoader, Dataset
-from torch.autograd import Variable
 import spacy
 import pandas as pd
-from PIL import Image
-from torchvision.models import ResNet18_Weights
 spacy_eng = spacy.load("en_core_web_sm")
-from tqdm import tqdm
-import pickle
 torch.manual_seed(17)
+from transformers import AutoTokenizer
+tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
 from train_and_validation import ImageCaptionModel,PositionalEncoding,DatasetLoader
 
 ### VARIABLES
-# train_file_path = '../data/tokenized_annotation/train.pkl'
-# train_image_path = "../data/images/train/"
-
-val_file_path = '../data/tokenized_annotation/val.pkl'
+# val_file_path = '../data/tokenized_annotation/val.pkl'
+val_file_path = '../data/BERT_tokenized_annotation/val.pkl'
 val_image_path = "../data/images/val/"
 
 vocabs = pd.read_pickle('model/vocabsize.pkl')
+
 #
 index_to_word=vocabs["index_to_word"]
 word_to_index = vocabs["word_to_index"]
 max_seq_len = vocabs["max_seq_len"]
 vocab_size=vocabs["vocab_size"]
 
-
-# max_seq_len = 46
-IMAGE_SIZE = 224
-# EPOCH = 60
-
 ###
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
-
 ###
-# TRAIN
-# train = pd.read_csv(train_file_path)
-# train = pd.read_pickle(train_file_path)
-# print(f"Length of Train set: {len(train)}")
-# print(train.tail(3))
 # VAL
 # valid = pd.read_csv(val_file_path)
 valid = pd.read_pickle(val_file_path)
@@ -65,11 +42,13 @@ print(f"Length of validation set: {len(valid)}")
 ###############################################################
 
 model = torch.load('model/BestModel')
-start_token = word_to_index['<start>']
-end_token = word_to_index['<end>']
-pad_token = word_to_index['<pad>']
-max_seq_len = 46
-# print(start_token, end_token, pad_token)
+# start_token = word_to_index['<start>']
+# end_token = word_to_index['<end>']
+# pad_token = word_to_index['<pad>']
+start_token = word_to_index['[CLS]']
+end_token = word_to_index['[SEP]']
+pad_token = word_to_index['[PAD]']
+
 
 
 valid_img_embed = pd.read_pickle('model/EncodedImageValidResNet.pkl')
@@ -107,7 +86,7 @@ def generate_caption(K, img_nm, img_loc):
     input_seq[0] = start_token
 
     input_seq = torch.tensor(input_seq).unsqueeze(0).to(device)
-    predicted_sentence = []
+    predicted_tokens = []
     with torch.no_grad():
         # for eval_iter in range(0, max_seq_len):
         for eval_iter in range(0, max_seq_len-1):
@@ -136,14 +115,16 @@ def generate_caption(K, img_nm, img_loc):
             input_seq[:, eval_iter+1] = next_word_index
 
 
-            if next_word == '<end>' :
+            if next_word == end_token :
                 break
 
-            predicted_sentence.append(next_word)
+            predicted_tokens.append(next_word)
     # print("\n")
     # print("Predicted caption : ")
     # print(" ".join(predicted_sentence+['.']))
-    predicted_sentence = " ".join(predicted_sentence)
+    # predicted_sentence = " ".join(predicted_sentence)
+    ids = tokenizer.convert_tokens_to_ids(predicted_tokens) # covert predicted tokens to ids
+    predicted_sentence = tokenizer.decode(ids, skip_special_tokens=True) # decode ids to original sentence
     # print(type(actual_caption))
     return [img_nm,actual_caption, predicted_sentence]
 

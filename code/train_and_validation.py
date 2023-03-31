@@ -11,10 +11,12 @@ from tqdm import tqdm
 torch.manual_seed(17)
 
 ### VARIABLES
-train_file_path = '../data/tokenized_annotation/train.pkl'
+# train_file_path = '../data/tokenized_annotation/train.pkl'
+train_file_path = '../data/BERT_tokenized_annotation/train.pkl'
 train_image_path = "../data/images/train/"
 
-val_file_path = '../data/tokenized_annotation/val.pkl'
+# val_file_path = '../data/tokenized_annotation/val.pkl'
+val_file_path = '../data/BERT_tokenized_annotation/val.pkl'
 val_image_path = "../data/images/val/"
 
 vocabs = pd.read_pickle('model/vocabsize.pkl')
@@ -143,14 +145,13 @@ def train():
     # TRAIN
     # train = pd.read_csv(train_file_path)
     train = pd.read_pickle(train_file_path)
-    # train = train[:32]
-    # train = pd.read_csv(train_file_path, sep=',', skipinitialspace = True)
+    # train = train[:128]
     print(f"Length of Train set: {len(train)}")
     print(train.tail(3))
     # VAL
     # valid = pd.read_csv(val_file_path)
     valid = pd.read_pickle(val_file_path)
-    # valid=valid[:32]
+    # valid=valid[:128]
     print(f"Length of validation set: {len(valid)}")
     print(valid.head(3))
 
@@ -161,12 +162,11 @@ def train():
     valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size=32, shuffle=True)
 
     # MODEL TRAIN
-    # ResNET18
-    # ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
-    # ResNET50
     ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
-    optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
-    # optimizer = torch.optim.SGD(ictModel.parameters(), lr=0.01, momentum=0.9)
+    # ictModel = torch.load('model/BestModel')
+    # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
+    # optimizer = torch.optim.Adamax(ictModel.parameters(), lr=0.00001)
+    optimizer = torch.optim.SGD(ictModel.parameters(), lr=0.01, momentum=0.9)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=2, verbose=True)
     criterion = torch.nn.CrossEntropyLoss(reduction='none')
     min_val_loss = float('Inf')

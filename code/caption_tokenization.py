@@ -72,25 +72,14 @@ def token_generation():
 
 
     # tokenization
-    # Creating blank language object then
-    # tokenizing words of the sentence
-    # nlp = spacy.blank("en")
-    #
-    # df['cleaned_caption'] = df['cleaned_caption'].apply(lambda x: [t.text for t in nlp.tokenizer(x)])
-
-    # print('-' * 60)
-    # print(df['Caption'][:4])
-    # print(df['cleaned_caption'][:4])
-    # print('-' * 60)
-
-    # # Get maximum length of caption sequence
-    # df['cleaned_caption'] = df['cleaned_caption'].apply(
-    #     lambda caption: ['<start>'] + caption + ['<end>'])
-
+    ###########################################################################################################
     # Get maximum length of caption sequence
+    # df['cleaned_caption'] = df['cleaned_caption'].apply(
+    #     lambda caption: ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
+    #         '<end>'])
     df['cleaned_caption'] = df['cleaned_caption'].apply(
-        lambda caption: ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
-            '<end>'])
+        lambda caption: ['[CLS]'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
+            '[SEP]'])
 
     print('-' * 60)
     print(df['Caption'][:4])
@@ -120,7 +109,7 @@ def token_generation():
         if (len(df['cleaned_caption'][i]) > 46):
             temp = df['cleaned_caption'][i]
             temp = temp[:45]
-            temp.append("<end>")
+            temp.append("[SEP]")
             df._set_value(i, 'cleaned_caption', temp)
 
     print(df['cleaned_caption'][0])
@@ -128,44 +117,102 @@ def token_generation():
     max_seq_len = df['seq_len'].max()
     print(f"Maximum length of sequence: {max_seq_len}")
     df.drop(['seq_len'], axis=1, inplace=True)
+    # df['cleaned_caption'] = df['cleaned_caption'].apply(
+    #     lambda caption: caption + ['<pad>'] * (max_seq_len - len(caption)))
     df['cleaned_caption'] = df['cleaned_caption'].apply(
-        lambda caption: caption + ['<pad>'] * (max_seq_len - len(caption)))
+        lambda caption: caption + ['[PAD]'] * (max_seq_len - len(caption)))
+    print(len(df['cleaned_caption'][0]))
+    ###########################################################################################################
 
-    # Create Vocabulary
-    word_list = df['cleaned_caption'].apply(lambda x: " ".join(x)).str.cat(sep=' ').split(' ')
-    word_dict = Counter(word_list)
-    word_dict = sorted(word_dict, key=word_dict.get, reverse=True)
-    # print(word_dict)
-    print('-' * 60)
-    print(f"Length of word dict: {len(word_dict)}")
-    vocab_size = len(word_dict)
-    print(f"Vocab Size: {vocab_size}")
-    print('-' * 60)
-    vocabSize={}
-    vocabSize["vocab_size"]=vocab_size
+    # # Create Vocabulary
+    # word_list = df['cleaned_caption'].apply(lambda x: " ".join(x)).str.cat(sep=' ').split(' ')
+    # word_dict = Counter(word_list)
+    # word_dict = sorted(word_dict, key=word_dict.get, reverse=True)
+    # # print(word_dict)
+    # print('-' * 60)
+    # print(f"Length of word dict: {len(word_dict)}")
+    # vocab_size = len(word_dict)
+    # print(f"Vocab Size: {vocab_size}")
+    # print('-' * 60)
+    # vocabSize={}
+    # vocabSize["vocab_size"]=vocab_size
+    #
+    #
+    # # word to indexing
+    # index_to_word = {index: word for index, word in enumerate(word_dict)}
+    # word_to_index = {word: index for index, word in enumerate(word_dict)}
+    # # print(index_to_word)
+    # # save word to index
+    # # indexjson=json.dumps(index_to_word)
+    # # # filejson=open("results/index2word.txt","w")
+    # # filejson = open("results/index2word.json", "w")
+    # # # filejson.write(str(index_to_word))
+    # # filejson.write(indexjson)
+    # # filejson.close()
+    # # print(len(index_to_word), len(word_to_index))
+    # vocabSize["index_to_word"] = index_to_word
+    # vocabSize["word_to_index"] = word_to_index
+    # vocabSize["max_seq_len"] = max_seq_len
+    #
+    #
+    # # Covert sequence of tokens to IDs
+    # df['text_seq'] = df['cleaned_caption'].apply(lambda caption: [word_to_index[word] for word in caption])
+    # print(df.head(5))
+    # print('-' * 60)
+    #
+    # # Train-Validation split
+    # print('-' * 60)
+    # train = df[:len(train)]
+    # # print(train['Caption'][0])
+    # valid = df[len(train):]
+    # valid.reset_index(inplace=True, drop=True)
 
+    ###########################################################################################
 
-    # word to indexing
-    index_to_word = {index: word for index, word in enumerate(word_dict)}
-    word_to_index = {word: index for index, word in enumerate(word_dict)}
-    # print(index_to_word)
-    # save word to index
-    # indexjson=json.dumps(index_to_word)
-    # # filejson=open("results/index2word.txt","w")
-    # filejson = open("results/index2word.json", "w")
-    # # filejson.write(str(index_to_word))
-    # filejson.write(indexjson)
-    # filejson.close()
-    # print(len(index_to_word), len(word_to_index))
-    vocabSize["index_to_word"] = index_to_word
-    vocabSize["word_to_index"] = word_to_index
+    # from transformers import AutoTokenizer
+    # tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+    # print(tokenizer.vocab)
+    # print('-' * 60)
+    text_seq = []
+
+    from transformers import BertTokenizer
+
+    # Load the tokenizer of the "bert-base-cased" pretrained model
+    # See https://huggingface.co/transformers/pretrained_models.html for other models
+    tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
+
+    for sent in df['cleaned_caption']:
+        # Encode the sentence
+        encoded = tokenizer.encode_plus(
+            text=sent,  # the sentence to be encoded
+            add_special_tokens=False,  # Add [CLS] and [SEP]
+            max_length=max_seq_len,  # maximum length of a sentence
+            pad_to_max_length=True,  # Add [PAD]s
+            # return_attention_mask=True,  # Generate the attention mask
+            is_split_into_words = True,
+            return_tensors='pt',  # ask the function to return PyTorch tensors
+        )
+        input_ids = encoded['input_ids'].tolist()[0]
+        print(len(input_ids))
+        text_seq.append(input_ids)
+        print(input_ids)
+    df['text_seq'] = text_seq
+    print(df.columns)
+    # # print(len(index_to_word), len(word_to_index))
+    vocabSize = {}
+    vocab_size = len(tokenizer.get_vocab())
+    vocabSize["vocab_size"] = vocab_size
+    vocabSize["index_to_word"] = {v: k for k, v in tokenizer.get_vocab().items()}
+    vocabSize["word_to_index"] = tokenizer.get_vocab()
     vocabSize["max_seq_len"] = max_seq_len
+    print(len(vocabSize["index_to_word"]), len(vocabSize["word_to_index"]))
 
 
-    # Covert sequence of tokens to IDs
-    df['text_seq'] = df['cleaned_caption'].apply(lambda caption: [word_to_index[word] for word in caption])
-    print(df.head(5))
     print('-' * 60)
+    # print(f"vocab: {vocabSize}")
+    vocab_file = open("model/vocabsize.pkl", "wb")
+    pickle.dump(vocabSize, vocab_file)
+    vocab_file.close()
 
     # Train-Validation split
     print('-' * 60)
@@ -173,32 +220,36 @@ def token_generation():
     # print(train['Caption'][0])
     valid = df[len(train):]
     valid.reset_index(inplace=True, drop=True)
-    # print("Train DF: ")
-    # print(train.tail(3))
-    # print("Validation DF: ")
-    # print(valid.head(3))
-    # print(type(train), len(train))
-    # print(type(valid), len(valid))
-    print('-' * 60)
-    vocab_file = open("model/vocabsize.pkl", "wb")
-    pickle.dump(vocabSize, vocab_file)
-    vocab_file.close()
+    ##########################################################################################
 
     return train,valid
-    # Save files
+
 
 
 if __name__ == "__main__":
     train,valid=token_generation()
 
-    train.to_csv('../data/tokenized_annotation/train.csv', index=False)
-    valid.to_csv('../data/tokenized_annotation/val.csv', index=False)
+    # Save files
+    # train.to_csv('../data/tokenized_annotation/train.csv', index=False)
+    # valid.to_csv('../data/tokenized_annotation/val.csv', index=False)
+    # # Save the token into a pickle file
+    # trainpkl = open("../data/tokenized_annotation/train.pkl", "wb")
+    # pickle.dump(train, trainpkl)
+    # trainpkl.close()
+    #
+    # valpkl = open("../data/tokenized_annotation/val.pkl", "wb")
+    # pickle.dump(valid, valpkl)
+    # valpkl.close()
+
+    # Save files
+    train.to_csv('../data/BERT_tokenized_annotation/train.csv', index=False)
+    valid.to_csv('../data/BERT_tokenized_annotation/val.csv', index=False)
     # Save the token into a pickle file
-    trainpkl = open("../data/tokenized_annotation/train.pkl", "wb")
+    trainpkl = open("../data/BERT_tokenized_annotation/train.pkl", "wb")
     pickle.dump(train, trainpkl)
     trainpkl.close()
 
-    valpkl = open("../data/tokenized_annotation/val.pkl", "wb")
+    valpkl = open("../data/BERT_tokenized_annotation/val.pkl", "wb")
     pickle.dump(valid, valpkl)
     valpkl.close()
 
