@@ -134,7 +134,7 @@ class ImageCaptionModel(nn.Module):
         decoder_output = self.TransformerDecoder(tgt=decoder_inp_embed, memory=encoded_image,
                                                  tgt_mask=decoder_input_mask,
                                                  tgt_key_padding_mask=decoder_input_pad_mask_bool)
-
+        # print(decoder_output.shape)
         final_output = self.last_linear_layer(decoder_output)
 
         return final_output, decoder_input_pad_mask
@@ -162,11 +162,12 @@ def train():
     valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size=32, shuffle=True)
 
     # MODEL TRAIN
-    ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
-    # ictModel = torch.load('model/BestModel')
-    # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
+    # ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
+    ictModel = torch.load('model/BestModel')
+    optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
+    # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.0001)
     # optimizer = torch.optim.Adamax(ictModel.parameters(), lr=0.00001)
-    optimizer = torch.optim.SGD(ictModel.parameters(), lr=0.01, momentum=0.9)
+    # optimizer = torch.optim.SGD(ictModel.parameters(), lr=0.01, momentum=0.9)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=2, verbose=True)
     criterion = torch.nn.CrossEntropyLoss(reduction='none')
     min_val_loss = float('Inf')

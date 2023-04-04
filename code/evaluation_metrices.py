@@ -116,12 +116,15 @@ if __name__ == "__main__":
     print("-" * 50)
     scores_df = evaluation_metrices('results/results.csv')
     print("-" * 50)
+
     print("Test")
     print("-" * 50)
     scores_df_test = evaluation_metrices('results/test_results.csv')
-    print(scores_df)
 
-    scores_df.to_csv('results/val_scores.csv', index=False)
+    # print(scores_df)
+
+    # Save results
+    # scores_df.to_csv('results/val_scores.csv', index=False)
     scores_df_test.to_csv('results/test_scores.csv', index=False)
 
 
