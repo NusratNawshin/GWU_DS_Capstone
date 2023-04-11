@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Image Caption Generator</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <h1 class="jumbotron bg-primary" style="text-align: center">Image Caption Generator</h1>
+  <br><br>
+  <form class="form-horizontal" action="/submit" method="post" enctype="multipart/form-data">
+
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="pwd">Upload Image :</label>
+      <div class="col-sm-10">
+        <input type="file" class="form-control" placeholder="Hours Studied"  name="my_image" id="pwd">
+      </div>
+
+    </div>
+
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button type="submit" class="btn btn-success">Generate</button>
+      </div>
+    </div>
+
+  </form>
+
+	{% if prediction %}
+  <img id='image_name' src="{{img_path}}" height="400px" width="400px" style="display: block; margin-left: auto;margin-right: auto; width: 50%">
+	<h2 id="caption"> Caption   : <i> {{prediction}} </i></h2>
+   <div class="col-sm-offset-2 col-sm-10">
+        <button class="btn btn-success" onclick="sayit()">Say it again</button>
+      </div>
+  <script>
+    function sayit(){
+      console.log("Say it button")
+      caption=document.getElementById('caption')
+      var text = caption.innerHTML
+      text=text.replace('<i>','')
+      text=text.replace('</i>','')
+      text=text.replace(':','')
+      text=text.replace('Caption','')
+      text=text.trimStart()
+      image=document.getElementById('image_name').src
+      var image=image.split('/')
+      image=image.slice(-1)[0]
+      $.ajax({
+        type: 'POST',
+        url : '/txt2speech',
+        data : {caption : text, image_path: image },
+        dataType : 'text',
+        success : function (data){
+          console.log("Success")
+        }
+      })
+    }
+  </script>
+  {% if flag == "read": %}
+    <script>
+      caption=document.getElementById('caption')
+      var text = caption.innerHTML
+      text=text.replace('<i>','')
+      text=text.replace('</i>','')
+      text=text.replace(':','')
+      text=text.replace('Caption','')
+      text=text.trimStart()
+      // console.log(text)
+      image=document.getElementById('image_name').src
+      var image=image.split('/')
+      image=image.slice(-1)[0]
+      // console.log(image)
+      $.ajax({
+        type: 'POST',
+        url : '/txt2speech',
+        data : {caption : text, image_path: image },
+        dataType : 'text',
+        success : function (data){
+          console.log("Success")
+        }
+      })
+    </script>
+  {% endif %}
+	{% endif %}
+
+</div>

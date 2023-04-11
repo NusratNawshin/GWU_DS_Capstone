@@ -133,10 +133,38 @@ print(f"\nTotal data in the train set: {len(train_dataset)}")
 print(f"Total data in the validation set: {len(val)}")
 print(f"Total data in the test set: {len(test)}")
 
-# # Saving all data to CSV files
-train_dataset.to_csv('../data/annotations/train.csv', index=False)
-val.to_csv('../data/annotations/val.csv', index=False)
-test.to_csv('../data/annotations/test.csv', index=False)
+##############################################################
+# DATA Cleaning
+##############################################################
+
+
+def cleaned_df(df, txt):
+  temp = df.copy()
+  temp['Caption'] = temp['Caption'].apply(lambda x:x.lower())
+  ids = temp[temp['Caption']==txt]
+  print(f"{len(ids)} matches found")
+  df = temp[~temp.Name.isin(ids['Name'])]
+  return df.reset_index(drop = True)
+
+cleaned_train = cleaned_df(train_dataset, 'quality issues are too severe to recognize visual content.')
+cleaned_valid = cleaned_df(val, 'quality issues are too severe to recognize visual content.')
+cleaned_test = cleaned_df(test, 'quality issues are too severe to recognize visual content.')
+
+
+print(f"\nAfter Cleaning\nTotal data in the train set: {len(cleaned_train)}")
+print(f"Total data in the validation set: {len(cleaned_valid)}")
+print(f"Total data in the test set: {len(cleaned_test)}")
+
+
+# # # Saving all data to CSV files
+# train_dataset.to_csv('../data/annotations/train.csv', index=False)
+# val.to_csv('../data/annotations/val.csv', index=False)
+# test.to_csv('../data/annotations/test.csv', index=False)
+
+# # Saving cleaned data to CSV files
+cleaned_train.to_csv('../data/cleaned_annotations/train.csv', index=False)
+cleaned_valid.to_csv('../data/cleaned_annotations/val.csv', index=False)
+cleaned_test.to_csv('../data/cleaned_annotations/test.csv', index=False)
 
 
 # # Remove blurry picture data

@@ -124,7 +124,7 @@ if __name__ == "__main__":
     # print(scores_df)
 
     # Save results
-    # scores_df.to_csv('results/val_scores.csv', index=False)
+    scores_df.to_csv('results/val_scores.csv', index=False)
     scores_df_test.to_csv('results/test_scores.csv', index=False)
 
 

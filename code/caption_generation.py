@@ -12,6 +12,7 @@ from train_and_validation import ImageCaptionModel,PositionalEncoding,DatasetLoa
 ### VARIABLES
 # val_file_path = '../data/tokenized_annotation/val.pkl'
 val_file_path = '../data/BERT_tokenized_annotation/val.pkl'
+# val_file_path = '../data/cleaned_BERT_tokenized_annotation/val.pkl'
 val_image_path = "../data/images/val/"
 
 vocabs = pd.read_pickle('model/vocabsize.pkl')
@@ -45,6 +46,7 @@ model = torch.load('model/BestModel')
 # start_token = word_to_index['<start>']
 # end_token = word_to_index['<end>']
 # pad_token = word_to_index['<pad>']
+#BERT
 start_token = word_to_index['[CLS]']
 end_token = word_to_index['[SEP]']
 pad_token = word_to_index['[PAD]']
@@ -55,17 +57,9 @@ valid_img_embed = pd.read_pickle('model/EncodedImageValidResNet.pkl')
 # print(valid_img_embed)
 
 def generate_caption(K, img_nm, img_loc):
-    # img_loc = img_loc+str(img_nm)
-    # image = Image.open(img_loc).convert("RGB")
-    # plt.imshow(image)
 
     model.eval()
-    # valid_img_df = valid[valid['Name']==img_nm]
-    # print(valid.query('Name==@img_nm')["index"])
-    # print(valid.index[valid["Name"]==img_nm].tolist())
     captionindex=valid.index[valid["Name"]==img_nm].tolist()
-    # print(valid["Caption"][indexs[0]])
-    # print(captionindex)
     actual_caption=[]
     for i in range(len(captionindex)):
         actual_caption.append(valid["Caption"][captionindex[i]])
@@ -115,14 +109,16 @@ def generate_caption(K, img_nm, img_loc):
             input_seq[:, eval_iter+1] = next_word_index
 
 
-            if next_word == end_token :
+            # if next_word == '<end>' :
+            if next_word == '[SEP]' : # BERT
                 break
 
             predicted_tokens.append(next_word)
     # print("\n")
     # print("Predicted caption : ")
     # print(" ".join(predicted_sentence+['.']))
-    # predicted_sentence = " ".join(predicted_sentence)
+    # predicted_sentence = " ".join(predicted_tokens)
+    # BERT
     ids = tokenizer.convert_tokens_to_ids(predicted_tokens) # covert predicted tokens to ids
     predicted_sentence = tokenizer.decode(ids, skip_special_tokens=True) # decode ids to original sentence
     # print(type(actual_caption))

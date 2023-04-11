@@ -22,51 +22,34 @@ spacy_eng = spacy.load("en_core_web_sm")
 from tqdm import tqdm
 import pickle
 torch.manual_seed(17)
+
 from train_and_validation import ImageCaptionModel,PositionalEncoding,DatasetLoader
+
 from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
 
 ### VARIABLES
-test_file_path = '../data/annotations/test.csv'
+# test_file_path = '../data/annotations/test.csv'
 # test_file_path = '../data/cleaned_annotations/test.csv'
-test_image_path = "../data/images/val/"
+
 
 # max_seq_len = 46
 # IMAGE_SIZE = 299
-IMAGE_SIZE = 224
-extract_feature = False
+
 # EPOCH = 60
 
 ###
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(device)
-
-###
-
-test = pd.read_csv(test_file_path)
-# test=test[:32]
-unique_test = test[['Name']].drop_duplicates()
 
 
-print(f"Length of test set: {len(test)}")
-
-vocabs = pd.read_pickle('model/vocabsize.pkl')
-#
-index_to_word=vocabs["index_to_word"]
-word_to_index = vocabs["word_to_index"]
-max_seq_len = vocabs["max_seq_len"]
-vocab_size=vocabs["vocab_size"]
+# print(vocabs)
 
 ###############################################################
 #                    Extract Features
 ###############################################################
 
-if os.path.exists('model/EncodedImageTestResNet.pkl'):
-    pass
-if extract_feature == False:
-    pass
-else:
+def load_image(test_image_path,device, IMAGE_SIZE):
     print("--IMAGE PROCESSING--")
+
     test_trnsform=transforms.Compose([
         # transforms.ToPILImage(),
         transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
@@ -75,31 +58,24 @@ else:
     ])
 
     class CustomDataset(Dataset):
-        def __init__(self, data, image_path, transform=None):
+        def __init__(self, image_path, transform=None):
             self.image_path = image_path
-            self.data = data
-            # self.data = self.data[['Name']].drop_duplicates()
-            # self.data = self.data[:32]
             self.transform = transform
 
-
         def __len__(self):
-            return len(self.data)
-
+            return 1
 
         def __getitem__(self, index):
             # IMAGES
-            img_name = self.data.iloc[index, 0]
-            img_path = str(self.image_path+img_name)
+            # img_name = self.data.iloc[index, 0]
+            img_path = str(self.image_path)
             img = Image.open(img_path)
             if self.transform is not None:
                 img = self.transform(img)
-            return img,img_name
+            return img
 
     # test dataset
-    test_file = pd.read_csv(test_file_path)
-    test_file = test_file[['Name']].drop_duplicates()
-    test_image_dataset = CustomDataset(test_file, test_image_path, transform = test_trnsform)
+    test_image_dataset = CustomDataset(test_image_path, transform = test_trnsform)
     test_image_dataloader = DataLoader(test_image_dataset, batch_size=1, shuffle=False)
 
     # RESNET 18
@@ -200,26 +176,30 @@ else:
     # model = CNN()
 
     ####
-    extract_imgFtr_ResNet_test = {}
-    print("Extracting features from Test set:")
-    for imgs,image_name in tqdm(test_image_dataloader):
+    extract_img = {}
+    print("Extracting features from Image:")
+    for imgs in tqdm(test_image_dataloader):
+        image_name = 'test'
         t_img = imgs.to(device)
         embdg = get_vector(t_img)
         # embd_cnn = model(embdg)
         # print(embd_cnn.shape)
         # extract_imgFtr_ResNet_test[image_name[0]] = embd_cnn
-        extract_imgFtr_ResNet_test[image_name[0]] = embdg  # RESNET 18 #VGG16
+        extract_img[image_name] = embdg  # RESNET 18 #VGG16
+        # print(embdg.shape)
 
     # print(extract_imgFtr_ResNet_train)
     # print(tokenized_caption_train)
 
-    #####
-    a_file = open("model/EncodedImageTestResNet.pkl", "wb")
-    pickle.dump(extract_imgFtr_ResNet_test, a_file)
-    a_file.close()
+    # #####
+    # a_file = open("model/EncodedImageTestResNet.pkl", "wb")
+    # pickle.dump(extract_imgFtr_ResNet_test, a_file)
+    # a_file.close()
+    print(" --- Image Feature Extraction Done --- ")
+    return extract_img
 
 
-print(" --- Image Feature Extraction Done --- ")
+
 
 ###############################################################
 #                    Generate Caption
@@ -230,34 +210,32 @@ print(" --- Image Feature Extraction Done --- ")
 # max_seq_len = vocabs["max_seq_len"]
 # vocab_size=vocabs["vocab_size"]
 
-model = torch.load('model/BestModel')
-# start_token = word_to_index['<start>']
-# end_token = word_to_index['<end>']
-# pad_token = word_to_index['<pad>']
-#BERT
-start_token = word_to_index['[CLS]']
-end_token = word_to_index['[SEP]']
-pad_token = word_to_index['[PAD]']
-# max_seq_len = 46
-# print(start_token, end_token, pad_token)
-
-test_img_embed = pd.read_pickle('model/EncodedImageTestResNet.pkl')
 
 
-def generate_caption(K, img_nm, img_loc):
+
+def generate_caption(K, device, test_img_embed):
+    vocabs = pd.read_pickle('model/vocabsize.pkl')
+    #
+    index_to_word = vocabs["index_to_word"]
+    word_to_index = vocabs["word_to_index"]
+    max_seq_len = vocabs["max_seq_len"]
+    vocab_size = vocabs["vocab_size"]
+    # print(vocabs)
+
+    # start_token = word_to_index['<start>']
+    # end_token = word_to_index['<end>']
+    # pad_token = word_to_index['<pad>']
+    # BERT
+    start_token = word_to_index['[CLS]']
+    end_token = word_to_index['[SEP]']
+    pad_token = word_to_index['[PAD]']
+
+    # model = torch.load('../model/BestModel')
+    model = torch.load('model/BestModel2')
+
     model.eval()
-    captionindex=test.index[test["Name"]==img_nm].tolist()
-    # print(valid["Caption"][indexs[0]])
-    # print(captionindex)
-    actual_caption=[]
-    for i in range(len(captionindex)):
-        actual_caption.append(test["Caption"][captionindex[i]])
 
-    # print("Actual Caption : ")
-    # print(valid_img_df)
-    # actual_caption=valid_img_df['Caption'].to_string(index=False)
-    # print(valid_img_df['Caption'])
-    img_embed = test_img_embed[img_nm].to(device)
+    img_embed = test_img_embed['test'].to(device)
     # print(img_embed)
 
 
@@ -308,29 +286,26 @@ def generate_caption(K, img_nm, img_loc):
     ids = tokenizer.convert_tokens_to_ids(predicted_tokens)  # covert predicted tokens to ids
     predicted_sentence = tokenizer.decode(ids, skip_special_tokens=True)  # decode ids to original sentence
     # print(type(actual_caption))
-    return [img_nm,actual_caption, predicted_sentence]
+    return predicted_sentence
 
-# predictions=[]
-image_names=[]
-actual_captions=[]
-predicted_captions=[]
-for i in range(len(unique_test)):
-# for i in range(0, 2):
-    pred = generate_caption(1, unique_test.iloc[i]['Name'], test_image_path)
-    # print(unique_valid.iloc[i]['Name'])
-    # print(pred)
-    print("-"*50)
-    print("Image Name: "+pred[0])
-    print("Actual Caption: "+str(pred[1]))
-    print("Predicted Caption: "+pred[2])
-    print("-"*50)
-    image_names.append(pred[0])
-    actual_captions.append(pred[1])
-    predicted_captions.append(pred[2])
 
-pred_df = pd.DataFrame(
-    {'Name': image_names,
-     'actual_captions': actual_captions,
-     'predicted_captions': predicted_captions,
-     })
-pred_df.to_csv('results/test_results.csv', index=False)
+
+
+def result_caption(test_image_path):
+    # test_image_path = "test_image"
+    # image_name = "test3.jpg"
+    IMAGE_SIZE = 224
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
+
+    test_img_embed = load_image(test_image_path, device, IMAGE_SIZE)
+    # print(test_img_embed)
+
+    pred = generate_caption(1, device, test_img_embed)
+
+    print("Predicted Caption: " + pred)
+    return pred
+
+if __name__ == "__main__":
+    result_caption("static/test1.jpg")
+

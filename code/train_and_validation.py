@@ -13,10 +13,12 @@ torch.manual_seed(17)
 ### VARIABLES
 # train_file_path = '../data/tokenized_annotation/train.pkl'
 train_file_path = '../data/BERT_tokenized_annotation/train.pkl'
+# train_file_path = '../data/cleaned_BERT_tokenized_annotation/train.pkl'
 train_image_path = "../data/images/train/"
 
 # val_file_path = '../data/tokenized_annotation/val.pkl'
 val_file_path = '../data/BERT_tokenized_annotation/val.pkl'
+# val_file_path = '../data/cleaned_BERT_tokenized_annotation/val.pkl'
 val_image_path = "../data/images/val/"
 
 vocabs = pd.read_pickle('model/vocabsize.pkl')
@@ -28,7 +30,7 @@ vocab_size=vocabs["vocab_size"]
 
 # max_seq_len = 46
 # IMAGE_SIZE = 224
-EPOCH = 25
+EPOCH = 30
 
 ###
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -84,7 +86,7 @@ class ImageCaptionModel(nn.Module):
     def __init__(self, n_head, n_decoder_layer, vocab_size, embedding_size):
         super(ImageCaptionModel, self).__init__()
         self.pos_encoder = PositionalEncoding(embedding_size, 0.1)
-        self.TransformerDecoderLayer = nn.TransformerDecoderLayer(d_model=embedding_size, nhead=n_head)
+        self.TransformerDecoderLayer = nn.TransformerDecoderLayer(d_model=embedding_size, nhead=n_head, activation= 'relu')
         self.TransformerDecoder = nn.TransformerDecoder(decoder_layer=self.TransformerDecoderLayer,
                                                         num_layers=n_decoder_layer)
         self.embedding_size = embedding_size
@@ -145,13 +147,13 @@ def train():
     # TRAIN
     # train = pd.read_csv(train_file_path)
     train = pd.read_pickle(train_file_path)
-    # train = train[:128]
+    # train = train[:32]
     print(f"Length of Train set: {len(train)}")
     print(train.tail(3))
     # VAL
     # valid = pd.read_csv(val_file_path)
     valid = pd.read_pickle(val_file_path)
-    # valid=valid[:128]
+    # valid=valid[:32]
     print(f"Length of validation set: {len(valid)}")
     print(valid.head(3))
 
@@ -162,8 +164,8 @@ def train():
     valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size=32, shuffle=True)
 
     # MODEL TRAIN
-    # ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
-    ictModel = torch.load('model/BestModel')
+    ictModel = ImageCaptionModel(16, 6, vocab_size, 512).to(device)
+    # ictModel = torch.load('model/BestModel')
     optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
     # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.0001)
     # optimizer = torch.optim.Adamax(ictModel.parameters(), lr=0.00001)
