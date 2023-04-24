@@ -32,9 +32,9 @@ test_file_path = '../data/annotations/test.csv'
 test_image_path = "../data/images/val/"
 
 # max_seq_len = 46
-# IMAGE_SIZE = 299
-IMAGE_SIZE = 224
-extract_feature = False
+IMAGE_SIZE = 299
+# IMAGE_SIZE = 224
+extract_feature = True
 # EPOCH = 60
 
 ###
@@ -61,7 +61,7 @@ vocab_size=vocabs["vocab_size"]
 #                    Extract Features
 ###############################################################
 
-if os.path.exists('model/EncodedImageTestResNet.pkl'):
+if os.path.exists('model/EncodedImageTest.pkl'):
     pass
 if extract_feature == False:
     pass
@@ -120,6 +120,7 @@ else:
     print(list(vgg16._modules))
     vgg16_features = vgg16._modules.get('avgpool').to(device)
 
+    # Xception
     # xception = timm.create_model('xception', pretrained=True).to(device)
     # xception.eval()
     # print(list(xception._modules))
@@ -184,7 +185,7 @@ else:
     #             # nn.Conv2d(1024, 512, kernel_size=7, stride=1, padding=7),
     #             nn.Conv2d(2048, 512, kernel_size=7, stride=1, padding=6),
     #             nn.Conv2d(2048, 512, kernel_size=5, stride=1, padding=7),  # Xception
-                nn.Conv2d(2048, 512, kernel_size=6, stride=1, padding=5),  # Inception
+                nn.Conv2d(2048, 512, kernel_size=8, stride=1,padding=6), # Inception
                 # nn.BatchNorm2d(512),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(kernel_size=7, stride=1),
@@ -197,25 +198,25 @@ else:
             # x = self.linear_layers(x)
             return x
     #
-    # model = CNN()
+    model = CNN()
 
     ####
-    extract_imgFtr_ResNet_test = {}
+    extract_imgFtr_test = {}
     print("Extracting features from Test set:")
     for imgs,image_name in tqdm(test_image_dataloader):
         t_img = imgs.to(device)
         embdg = get_vector(t_img)
         # embd_cnn = model(embdg)
         # print(embd_cnn.shape)
-        # extract_imgFtr_ResNet_test[image_name[0]] = embd_cnn
-        extract_imgFtr_ResNet_test[image_name[0]] = embdg  # RESNET 18 #VGG16
+        # extract_imgFtr_test[image_name[0]] = embd_cnn
+        extract_imgFtr_test[image_name[0]] = embdg  # RESNET 18 #VGG16
 
     # print(extract_imgFtr_ResNet_train)
     # print(tokenized_caption_train)
 
     #####
-    a_file = open("model/EncodedImageTestResNet.pkl", "wb")
-    pickle.dump(extract_imgFtr_ResNet_test, a_file)
+    a_file = open("model/EncodedImageTest.pkl", "wb")
+    pickle.dump(extract_imgFtr_test, a_file)
     a_file.close()
 
 
@@ -241,7 +242,7 @@ pad_token = word_to_index['[PAD]']
 # max_seq_len = 46
 # print(start_token, end_token, pad_token)
 
-test_img_embed = pd.read_pickle('model/EncodedImageTestResNet.pkl')
+test_img_embed = pd.read_pickle('model/EncodedImageTest.pkl')
 
 
 def generate_caption(K, img_nm, img_loc):

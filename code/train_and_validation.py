@@ -3,10 +3,8 @@ import math
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
-import spacy
 import pandas as pd
-
-spacy_eng = spacy.load("en_core_web_sm")
+# from torchviz import make_dot
 from tqdm import tqdm
 torch.manual_seed(17)
 
@@ -30,7 +28,7 @@ vocab_size=vocabs["vocab_size"]
 
 # max_seq_len = 46
 # IMAGE_SIZE = 224
-EPOCH = 30
+EPOCH = 25
 
 ###
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -157,17 +155,20 @@ def train():
     print(f"Length of validation set: {len(valid)}")
     print(valid.head(3))
 
-    train_dataset_resnet = DatasetLoader(train, 'model/EncodedImageTrainResNet.pkl')
+    train_dataset_resnet = DatasetLoader(train, 'model/EncodedImageTrain.pkl')
     train_dataloader_resnet = DataLoader(train_dataset_resnet, batch_size=32, shuffle=True)
 
-    valid_dataset_resnet = DatasetLoader(valid, 'model/EncodedImageValidResNet.pkl')
+    valid_dataset_resnet = DatasetLoader(valid, 'model/EncodedImageValid.pkl')
     valid_dataloader_resnet = DataLoader(valid_dataset_resnet, batch_size=32, shuffle=True)
 
     # MODEL TRAIN
-    ictModel = ImageCaptionModel(16, 6, vocab_size, 512).to(device)
+    ictModel = ImageCaptionModel(16, 8, vocab_size, 512).to(device)
+
+    # End
     # ictModel = torch.load('model/BestModel')
     optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.00001)
-    # optimizer = torch.optim.Adam(ictModel.parameters(), lr=0.0001)
+    # # Controling model visualization
+    # break_point=0
     # optimizer = torch.optim.Adamax(ictModel.parameters(), lr=0.00001)
     # optimizer = torch.optim.SGD(ictModel.parameters(), lr=0.01, momentum=0.9)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=2, verbose=True)
@@ -193,6 +194,12 @@ def train():
 
             output, padding_mask = ictModel.forward(image_embed, caption_seq)
             output = output.permute(1, 2, 0)
+            # if(break_point==0):
+            #     dot = make_dot((output, padding_mask), params=dict(ictModel.named_parameters()), show_attrs=True, show_saved=True)
+            #     dot.render(filename="modelArchitecture/ictModel_visualization", format='svg')
+            #
+            #     print('saved')
+            #     break_point=break_point+1
 
             loss = criterion(output, target_seq)
 
@@ -204,6 +211,7 @@ def train():
             optimizer.step()
             total_epoch_train_loss += torch.sum(loss_masked).detach().item()
             total_train_words += torch.sum(padding_mask)
+
 
         total_epoch_train_loss = total_epoch_train_loss / total_train_words
 

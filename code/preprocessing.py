@@ -157,15 +157,14 @@ print(f"Total data in the test set: {len(cleaned_test)}")
 
 
 # # # Saving all data to CSV files
-# train_dataset.to_csv('../data/annotations/train.csv', index=False)
-# val.to_csv('../data/annotations/val.csv', index=False)
-# test.to_csv('../data/annotations/test.csv', index=False)
+train_dataset.to_csv('../data/annotations/train.csv', index=False)
+val.to_csv('../data/annotations/val.csv', index=False)
+test.to_csv('../data/annotations/test.csv', index=False)
 
 # # Saving cleaned data to CSV files
-cleaned_train.to_csv('../data/cleaned_annotations/train.csv', index=False)
-cleaned_valid.to_csv('../data/cleaned_annotations/val.csv', index=False)
-cleaned_test.to_csv('../data/cleaned_annotations/test.csv', index=False)
-
+# cleaned_train.to_csv('../data/cleaned_annotations/train.csv', index=False)
+# cleaned_valid.to_csv('../data/cleaned_annotations/val.csv', index=False)
+# cleaned_test.to_csv('../data/cleaned_annotations/test.csv', index=False)
 
 # # Remove blurry picture data
 # # "Quality issues are too severe to recognize visual content."

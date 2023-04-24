@@ -185,8 +185,8 @@ class CNN(nn.Module):
             # nn.Conv2d(1024, 512, kernel_size=7, stride=1, padding=7), # ResNet50,
             # nn.Conv2d(2048, 512, kernel_size=7, stride=1,padding=6), # VGG16
             # nn.Conv2d(2048, 512, kernel_size=5, stride=1,padding=7), # Xception
-            # nn.Conv2d(2048, 512, kernel_size=8, stride=1,padding=7), # Inception
-            nn.Conv2d(480, 512, kernel_size=10, stride=1,padding=6), # SSDlite
+            nn.Conv2d(2048, 512, kernel_size=8, stride=1,padding=6), # Inception
+            # nn.Conv2d(480, 512, kernel_size=10, stride=1,padding=6), # SSDlite
             # nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=7, stride=1),
@@ -200,12 +200,9 @@ class CNN(nn.Module):
         return x
 
 # model = CNN()
-# Loss and optimizer
-# criterion = CrossEntropyLoss()
-# optimizer = torch.optim.SGD(model.parameters(), lr=0.001, weight_decay = 0.001, momentum = 0.9)
 
 ####
-extract_imgFtr_ResNet_train = {}
+extract_img_feature_train = {}
 print("Extracting features from Train set:")
 for imgs,image_name in tqdm(train_image_dataloader):
     t_img = imgs.to(device)
@@ -213,30 +210,30 @@ for imgs,image_name in tqdm(train_image_dataloader):
     # embd_cnn = model(embdg)
     # print(embd_cnn.shape)
     # print(embd_cnn)
-    # extract_imgFtr_ResNet_train[image_name[0]] = embd_cnn  # resNet50, Xception, Inception
-    extract_imgFtr_ResNet_train[image_name[0]] = embdg # RESNET 18 #VGG16
+    # extract_img_feature_train[image_name[0]] = embd_cnn  # resNet50, Xception, Inception
+    extract_img_feature_train[image_name[0]] = embdg # RESNET 18 #VGG16
 
 # print(extract_imgFtr_ResNet_train)
 # print(tokenized_caption_train)
 
 #####
-a_file = open("model/EncodedImageTrainResNet.pkl", "wb")
-pickle.dump(extract_imgFtr_ResNet_train, a_file)
+a_file = open("model/EncodedImageTrain.pkl", "wb")
+pickle.dump(extract_img_feature_train, a_file)
 a_file.close()
 
 
 
-extract_imgFtr_ResNet_valid = {}
+extract_img_feature_valid = {}
 print("Extracting features from Validation set:")
 for imgs,image_name in tqdm(val_image_dataloader):
     t_img = imgs.to(device)
     embdg = get_vector(t_img)
     # embd_cnn = model(embdg)
     # print(embd_cnn.shape)
-    # extract_imgFtr_ResNet_valid[image_name[0]] = embd_cnn # resNet50, Xception, Inception
+    # extract_img_feature_valid[image_name[0]] = embd_cnn # resNet50, Xception, Inception
 
-    extract_imgFtr_ResNet_valid[image_name[0]] = embdg    # ResNet18 # VGG16
+    extract_img_feature_valid[image_name[0]] = embdg    # ResNet18 # VGG16
 
-a_file = open("model/EncodedImageValidResNet.pkl", "wb")
-pickle.dump(extract_imgFtr_ResNet_valid, a_file)
+a_file = open("model/EncodedImageValid.pkl", "wb")
+pickle.dump(extract_img_feature_valid, a_file)
 a_file.close()

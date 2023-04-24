@@ -53,7 +53,7 @@ pad_token = word_to_index['[PAD]']
 
 
 
-valid_img_embed = pd.read_pickle('model/EncodedImageValidResNet.pkl')
+valid_img_embed = pd.read_pickle('model/EncodedImageValid.pkl')
 # print(valid_img_embed)
 
 def generate_caption(K, img_nm, img_loc):

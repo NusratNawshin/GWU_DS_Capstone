@@ -1,12 +1,7 @@
 # IMPORTS
-import math
-import os
 import random
-from collections import Counter
-import wordninja
 import torch
 import torchvision
-import matplotlib.pyplot as plt
 import torch.nn as nn
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader, Dataset
@@ -32,17 +27,6 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
 # test_file_path = '../data/annotations/test.csv'
 # test_file_path = '../data/cleaned_annotations/test.csv'
 
-
-# max_seq_len = 46
-# IMAGE_SIZE = 299
-
-# EPOCH = 60
-
-###
-
-
-# print(vocabs)
-
 ###############################################################
 #                    Extract Features
 ###############################################################
@@ -54,7 +38,6 @@ def load_image(test_image_path,device, IMAGE_SIZE):
         # transforms.ToPILImage(),
         transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
         transforms.ToTensor(),
-        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     class CustomDataset(Dataset):
@@ -192,26 +175,15 @@ def load_image(test_image_path,device, IMAGE_SIZE):
     # print(tokenized_caption_train)
 
     # #####
-    # a_file = open("model/EncodedImageTestResNet.pkl", "wb")
+    # a_file = open("model/EncodedImageTest.pkl", "wb")
     # pickle.dump(extract_imgFtr_ResNet_test, a_file)
     # a_file.close()
     print(" --- Image Feature Extraction Done --- ")
     return extract_img
 
-
-
-
 ###############################################################
 #                    Generate Caption
 ###############################################################
-
-# index_to_word=vocabs["index_to_word"]
-# word_to_index = vocabs["word_to_index"]
-# max_seq_len = vocabs["max_seq_len"]
-# vocab_size=vocabs["vocab_size"]
-
-
-
 
 def generate_caption(K, device, test_img_embed):
     vocabs = pd.read_pickle('model/vocabsize.pkl')
@@ -231,17 +203,15 @@ def generate_caption(K, device, test_img_embed):
     pad_token = word_to_index['[PAD]']
 
     # model = torch.load('../model/BestModel')
-    model = torch.load('model/BestModel2')
+    model = torch.load('model/BestModel')
 
     model.eval()
 
     img_embed = test_img_embed['test'].to(device)
     # print(img_embed)
 
-
     img_embed = img_embed.permute(0,2,3,1)
     img_embed = img_embed.view(img_embed.size(0), -1, img_embed.size(3))
-
 
     input_seq = [pad_token]*max_seq_len
     input_seq[0] = start_token

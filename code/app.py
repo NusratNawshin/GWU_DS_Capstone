@@ -8,19 +8,11 @@ import pyttsx3
 
 app = Flask(__name__)
 
-# dic = {0 : 'Cat', 1 : 'Dog'}
-
-# model = load_model('model.h5')
-#
-# model.make_predict_function()
 #
 def predict_label(img_path):
 	i = image.load_img(img_path, target_size=(100,100))
 	i = image.img_to_array(i)/255.0
 	i = i.reshape(1, 100,100,3)
-	# p = model.predict_classes(i)
-	# return dic[p[0]]
-	# result_caption(img_path)
 	return " "
 
 
@@ -31,15 +23,14 @@ def main():
 
 # @app.route("/about")
 # def about_page():
-# 	return "GWU Capstone Project: Image Captionn Generator"
+# 	return "GWU Spring 2023 Capstone Project: Image Caption Generator"
 
 @app.route("/txt2speech", methods = ['GET', 'POST'])
 def text_to_speech():
 	text=request.form.get('caption')
 	image=request.form.get('image_path')
-	print("Hello this is me")
-	print(text)
-	print(image)
+	# print(text)
+	# print(image)
 	engine = pyttsx3.init()
 	engine.setProperty('rate', 110)
 	engine.setProperty('volume', 0.8)

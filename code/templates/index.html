@@ -12,21 +12,21 @@
 <body>
 
 <div class="container">
-  <h1 class="jumbotron bg-primary" style="text-align: center">Image Caption Generator</h1>
+  <h1 class="jumbotron bg-primary" style="text-align: center; background-color: powderblue; font-size: xxx-large">Image Caption Generator</h1>
   <br><br>
   <form class="form-horizontal" action="/submit" method="post" enctype="multipart/form-data">
 
     <div class="form-group">
-      <label class="control-label col-sm-2" for="pwd">Upload Image :</label>
-      <div class="col-sm-10">
-        <input type="file" class="form-control" placeholder="Hours Studied"  name="my_image" id="pwd">
+      <label class="h-50 control-label col-sm-2" for="pwd" style="font-size: large">Upload Image :</label>
+      <div class="h-50 col-sm-10">
+        <input type="file" class="form-control" placeholder=" "  name="my_image" id="pwd" style="font-size: large; height: auto">
       </div>
 
     </div>
 
-    <div class="form-group">
+    <div style="text-align: center" class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
-        <button type="submit" class="btn btn-success">Generate</button>
+        <button type="submit" class="btn btn-success btn-lg btn-block" style="background-color: darkcyan; font-size: x-large">Generate</button>
       </div>
     </div>
 
@@ -35,9 +35,9 @@
 	{% if prediction %}
   <img id='image_name' src="{{img_path}}" height="400px" width="400px" style="display: block; margin-left: auto;margin-right: auto; width: 50%">
 	<h2 id="caption"> Caption   : <i> {{prediction}} </i></h2>
-   <div class="col-sm-offset-2 col-sm-10">
-        <button class="btn btn-success" onclick="sayit()">Say it again</button>
-      </div>
+   <div style="text-align: center" class="col-sm-offset-2 col-sm-10">
+        <button class="btn btn-info btn-lg btn-block" style="font-size: x-large" onclick="sayit() ">Say it again</button>
+   </div>
   <script>
     function sayit(){
       console.log("Say it button")
