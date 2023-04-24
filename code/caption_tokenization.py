@@ -23,8 +23,11 @@ val_image_path = "../data/images/val/"
 ###
 
 def word_separator(df):
+    '''
+        Separates joined words using 'wordninja' package
+    '''
+
     for i in range(len(df)):
-    # for i in range(5):
         text=df['Caption'][i]
         words=text.split(' ')
         # print(words)
@@ -38,11 +41,18 @@ def word_separator(df):
             elif(len(result)==1):
                 caption += result[0] + " "
         df.loc[i,'Caption']= caption
+
 def token_generation():
+    """
+    Reads train and validation files and tokenizes captions, creates vocabulary pkl file
+
+    return: train and validation dataframes containing tokenized captions
+    """
     # TRAIN
     train = pd.read_csv(train_file_path, sep=',', skipinitialspace=True)
     print(f"Length of Train set: {len(train)}")
     word_separator(train)
+
     # VAL
     valid = pd.read_csv(val_file_path)
     print(f"Length of validation set: {len(valid)}")
@@ -50,13 +60,10 @@ def token_generation():
     word_separator(valid)
 
     #################################
-    # Concat train & validation dataframes
-
+    # Concat train & validation dataframes for tokenizing and creating vocabulary
     df = pd.concat([train, valid], ignore_index=True)
     print(f"Length of total df: {len(df)}")
-    # print(df[20559:20563])
-    # print('-' * 60)
-    # print('-' * 60)
+
     #################################
     # # CAPTION PREPROCESSING
 
@@ -75,10 +82,11 @@ def token_generation():
 
     # tokenization
     ###########################################################################################################
-    # Get maximum length of caption sequence
+    # BoW
     # df['cleaned_caption'] = df['cleaned_caption'].apply(
     #     lambda caption: ['<start>'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
     #         '<end>'])
+    # BERT
     df['cleaned_caption'] = df['cleaned_caption'].apply(
         lambda caption: ['[CLS]'] + [word.lower() if word.isalpha() else '' for word in caption.split(" ")] + [
             '[SEP]'])
@@ -120,15 +128,17 @@ def token_generation():
     print(f"Maximum length of sequence: {max_seq_len}")
     df.drop(['seq_len'], axis=1, inplace=True)
 
-
+    # BoW
     # df['cleaned_caption'] = df['cleaned_caption'].apply(
     #     lambda caption: caption + ['<pad>'] * (max_seq_len - len(caption)))
+
+    # BERT
     df['cleaned_caption'] = df['cleaned_caption'].apply(
         lambda caption: caption + ['[PAD]'] * (max_seq_len - len(caption)))
     # print(len(df['cleaned_caption'][0]))
     ###########################################################################################################
     #
-    # # # Create Vocabulary
+    # # # Create Vocabulary (BoW)
     # word_list = df['cleaned_caption'].apply(lambda x: " ".join(x)).str.cat(sep=' ').split(' ')
     # word_dict = Counter(word_list)
     # word_dict = sorted(word_dict, key=word_dict.get, reverse=True)
@@ -195,6 +205,8 @@ def token_generation():
     df['text_seq'] = text_seq
     print(df.columns)
     # # print(len(index_to_word), len(word_to_index))
+
+    # storing vocabulary info
     vocabSize = {}
     vocab_size = len(tokenizer.get_vocab())
     vocabSize["vocab_size"] = vocab_size

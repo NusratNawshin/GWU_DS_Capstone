@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 
+# reads the results csv files containing the best scores of each image captions and gives an output of the average
+# rouge2_fmeasure, rougeL_fmeasure, BLEU, and meteor scores
+
 #################################
 #        Validation Scores
 #################################

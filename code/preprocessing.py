@@ -165,37 +165,3 @@ test.to_csv('../data/annotations/test.csv', index=False)
 # cleaned_train.to_csv('../data/cleaned_annotations/train.csv', index=False)
 # cleaned_valid.to_csv('../data/cleaned_annotations/val.csv', index=False)
 # cleaned_test.to_csv('../data/cleaned_annotations/test.csv', index=False)
-
-# # Remove blurry picture data
-# # "Quality issues are too severe to recognize visual content."
-# train_dataset_cp = train_dataset.copy()
-# val_cp = val.copy()
-# test_cp = test.copy()
-#
-# train_dataset_cp.drop(train_dataset_cp.loc[train_dataset_cp['Caption']=='Quality issues are too severe to recognize visual content.'].index, inplace=True)
-# val_cp.drop(val_cp.loc[val_cp['Caption']=='Quality issues are too severe to recognize visual content.'].index, inplace=True)
-# test_cp.drop(test_cp.loc[test_cp['Caption']=='Quality issues are too severe to recognize visual content.'].index, inplace=True)
-#
-# print("\nNumber of Blurred Image Data Found:")
-# print(f"Train set: {len(train_dataset[train_dataset['Caption']=='Quality issues are too severe to recognize visual content.'])}")
-# print(f"Validation set: {len(val[val['Caption']=='Quality issues are too severe to recognize visual content.'])}")
-# print(f"Test set: {len(test[test['Caption']=='Quality issues are too severe to recognize visual content.'])}")
-#
-#
-# print("\nAfter Removing Blurred Image Data: ")
-# print(f"Total images in the train set: {len(train_dataset_cp)}")
-# print(f"Total images in the validation set: {len(val_cp)}")
-# print(f"Total images in the test set: {len(test_cp)}")
-#
-#
-# # CAPTION PREPROCESSING
-# # Removing all special chars
-# train_dataset_cp["Caption"] = train_dataset_cp["Caption"].str.replace(r'[^a-zA-Z0-9] ', '', regex=True)
-# val_cp["Caption"] = val_cp["Caption"].str.replace(r'[^a-zA-Z0-9] ', '', regex=True)
-# test_cp["Caption"] = test_cp["Caption"].str.replace(r'[^a-zA-Z0-9] ', '', regex=True)
-#
-#
-# # Saving all data to CSV files
-# # train_dataset_cp.to_csv('../data/annotations/train.csv', index=False)
-# # val_cp.to_csv('../data/annotations/val.csv', index=False)
-# # test_cp.to_csv('../data/annotations/test.csv', index=False)

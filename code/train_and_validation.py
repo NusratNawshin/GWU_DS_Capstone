@@ -26,8 +26,6 @@ word_to_index = vocabs["word_to_index"]
 max_seq_len = vocabs["max_seq_len"]
 vocab_size=vocabs["vocab_size"]
 
-# max_seq_len = 46
-# IMAGE_SIZE = 224
 EPOCH = 25
 
 ###
@@ -125,16 +123,9 @@ class ImageCaptionModel(nn.Module):
         decoder_input_pad_mask = decoder_input_pad_mask.to(device)
         decoder_input_pad_mask_bool = decoder_input_pad_mask_bool.to(device)
 
-        # print("decoder_inp_embed")
-        # print(decoder_inp_embed.shape)
-        # print("decoder_input_mask")
-        # print(decoder_input_mask.shape)
-        # print("decoder_input_pad_mask")
-        # print(decoder_input_pad_mask.shape)
         decoder_output = self.TransformerDecoder(tgt=decoder_inp_embed, memory=encoded_image,
                                                  tgt_mask=decoder_input_mask,
                                                  tgt_key_padding_mask=decoder_input_pad_mask_bool)
-        # print(decoder_output.shape)
         final_output = self.last_linear_layer(decoder_output)
 
         return final_output, decoder_input_pad_mask
@@ -235,8 +226,6 @@ def train():
 
         total_epoch_valid_loss = total_epoch_valid_loss / total_valid_words
 
-        # print("Epoch -> ", epoch, " Training Loss -> ", total_epoch_train_loss.item(), "Eval Loss -> ",
-        #       total_epoch_valid_loss.item())
         print(
             f"Epoch -> {epoch},  Training Loss -> {total_epoch_train_loss.item():.3f} Eval Loss -> {total_epoch_valid_loss.item():.3f}")
 

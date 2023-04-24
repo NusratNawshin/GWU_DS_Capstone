@@ -43,23 +43,19 @@ train_trnsform=transforms.Compose([
     # transforms.RandomVerticalFlip(),
     # transforms.RandomInvert(0.5),
     # transforms.RandomAdjustSharpness(0.5),
-    # transforms.ColorJitter(),
-    # transforms.Grayscale(),
     transforms.ToTensor(),
-    # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+
 ])
 val_trnsform=transforms.Compose([
-    # transforms.ToPILImage(),
     transforms.Resize([IMAGE_SIZE,IMAGE_SIZE]),
     transforms.ToTensor(),
-    # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+
 ])
 
 class CustomDataset(Dataset):
     def __init__(self, data, image_path, transform=None):
         self.image_path = image_path
         self.data = data
-        # self.data = self.data[['Name']].drop_duplicates()
         # self.data = self.data[:32]
         self.transform = transform
 

@@ -19,16 +19,30 @@ meteor = evaluate.load('meteor')
 # rouge_score = evaluate.load("rouge")
 
 def calculate_ROUGE(preds,target):
+    """
+    calculates rouge scores from actual caption and predicted caption
+
+    <string>:param preds: model predicted caption
+    <string>:param target: the actual image caption
+
+    <float>, <float>:return:
+        rouge 2 F measure score, rouge l F measure score
+    """
     rouge = ROUGEScore()
     result = rouge(preds, target)
-
-    # metrices = result.keys()
-    # metrices = list(result.keys())
-    # scores = [tensor.item() for tensor in result.values()]
 
     return result["rouge2_fmeasure"].item(),result["rougeL_fmeasure"].item()
 
 def calculate_BERT(preds,target):
+    """
+        calculates BERT from actual caption and predicted caption
+
+        <string>:param preds: model predicted caption
+        <string>:param target: the actual image caption
+
+        <float>:return:
+            BERT F1 score
+        """
     bertscore = BERTScore()
     score = bertscore(preds, target)
 
@@ -36,27 +50,49 @@ def calculate_BERT(preds,target):
     return score['f1']
 
 def calculate_BLEU(preds,target):
+    """
+        calculates BLEU scores from actual caption and predicted caption
+
+        <string>:param preds: model predicted caption
+        <string>:param target: the actual image caption
+
+        <float>:return:
+            BLEU score
+        """
+
     # return sentence_bleu(str(preds).split(' '), str(target).split(' '), weights=(.4, .3, .2, 0.1), smoothing_function=smooth)
     return sentence_bleu(str(preds).split(' '), str(target).split(' '), weights=(1, 0, 0, 0), smoothing_function=smooth)
 
 def calculate_meteor(preds,target):
+    """
+        calculates Meteor scores from actual caption and predicted caption
+
+        <string>:param preds: model predicted caption
+        <string>:param target: the actual image caption
+
+        <float>:return:
+            Meteor Score
+        """
     predictions = [preds]
     references = [target]
-    # print(list(preds))
+
     results = meteor.compute(predictions=predictions, references=references)
-    # print(results['meteor'])
+
     return results['meteor']
 
 
 def evaluation_metrices(path):
+    """
+    Reads csv file containing the actual captions and model generated captions, calculates  Rouge2, RougeL, BERT, BLEU,
+    Meteor scores and returns dataframe containing the best matching scores of all captions
+
+    <string>:param path: file path of result csv file
+    <dataframe>:return: dataframe containing Name, actual_captions, predicted_captions, rouge2_fmeasure, rougeL_fmeasure,
+                        BLEU, meteor
+    """
     predictions = pd.read_csv(path)
-    # predictions.columns = ['Name', 'Caption', 'Predicted_Caption']
-    # predictions = predictions[:20]
     print(predictions.head())
 
-    image_names=[]
-    actual_captions=[]
-    predicted_captions=[]
     rouge2_fmeasure_scores = []
     rougeL_fmeasure_scores = []
     bleu_scores = []
@@ -83,8 +119,7 @@ def evaluation_metrices(path):
             rouge2_fmeasure.append(res[0])
             rougeL_fmeasure.append(res[1])
             bleu.append(calculate_BLEU(actual_caption,predictions))
-            # print(f"bleu: {bleu}"
-            # print(len(rougeL_fmeasure))
+
             # bert.append(calculate_BERT(actual_caption,predictions['predicted_captions'][i]))
             meteor.append(calculate_meteor(actual_caption, predictions))
 
@@ -94,12 +129,6 @@ def evaluation_metrices(path):
         # bert_scores.append(max(bert))
         meteor_scores.append(max(meteor))
 
-    # print(rouge2_fmeasure_scores)
-    # print(len(rouge2_fmeasure_scores))
-    # print(rougeL_fmeasure_scores)
-    # print(len(rougeL_fmeasure_scores))
-    # print(bleu_scores)
-    # print(len(bleu_scores))
 
     # STORE VALUES in new DF
     scores_df = predictions.copy()

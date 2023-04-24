@@ -32,6 +32,14 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
 ###############################################################
 
 def load_image(test_image_path,device, IMAGE_SIZE):
+    """
+    Extracts image feature and returns embedded image feature vector
+
+    <string>:param test_image_path: image file path
+    <string>:param device: device name 'CPU' or 'CUDA' for torch device to use
+    <int>:param IMAGE_SIZE: image size to reshape image
+    <array>:return: vector of shape [1,512,7,7] containing image feature
+    """
     print("--IMAGE PROCESSING--")
 
     test_trnsform=transforms.Compose([
@@ -186,6 +194,14 @@ def load_image(test_image_path,device, IMAGE_SIZE):
 ###############################################################
 
 def generate_caption(K, device, test_img_embed):
+    """
+    Generated captions using BEAM search
+
+    <int>:param K: k largest elements to return for beam search
+    <string>:param device: device name 'CPU' or 'CUDA' for torch device to use
+    <array>:param test_img_embed: image feature vector
+    <string>:return: predicted sentence
+    """
     vocabs = pd.read_pickle('model/vocabsize.pkl')
     #
     index_to_word = vocabs["index_to_word"]
@@ -194,6 +210,7 @@ def generate_caption(K, device, test_img_embed):
     vocab_size = vocabs["vocab_size"]
     # print(vocabs)
 
+    # BoW
     # start_token = word_to_index['<start>']
     # end_token = word_to_index['<end>']
     # pad_token = word_to_index['<pad>']
@@ -202,7 +219,6 @@ def generate_caption(K, device, test_img_embed):
     end_token = word_to_index['[SEP]']
     pad_token = word_to_index['[PAD]']
 
-    # model = torch.load('../model/BestModel')
     model = torch.load('model/BestModel')
 
     model.eval()
@@ -225,45 +241,40 @@ def generate_caption(K, device, test_img_embed):
             output, padding_mask = model.forward(img_embed, input_seq)
 
             output = output[eval_iter, 0, :]
-            # print(output.tolist())
-            # print(len(output.tolist()))
-
 
             values = torch.topk(output, K).values.tolist()
             indices = torch.topk(output, K).indices.tolist()
 
             next_word_index = random.choices(indices, values, k = 1)[0]
-            # print("next word index")
-            # print(next_word_index)
             next_word = index_to_word[next_word_index]
-            # print("next word")
-            # print(next_word)
 
             input_seq[:, eval_iter+1] = next_word_index
 
 
-            # if next_word == '<end>' :
+            # if next_word == '<end>' : # BoW
             if next_word == '[SEP]' : #BERT
                 break
 
             predicted_tokens.append(next_word)
-    # print("\n")
-    # print("Predicted caption : ")
-    # print(" ".join(predicted_sentence+['.']))
+
+    # BoW
     # predicted_sentence = " ".join(predicted_tokens)
 
     # BERT
     ids = tokenizer.convert_tokens_to_ids(predicted_tokens)  # covert predicted tokens to ids
     predicted_sentence = tokenizer.decode(ids, skip_special_tokens=True)  # decode ids to original sentence
-    # print(type(actual_caption))
     return predicted_sentence
 
 
 
 
 def result_caption(test_image_path):
-    # test_image_path = "test_image"
-    # image_name = "test3.jpg"
+    """
+    Reads image file path, extracts image feature, reads the model and generates caption for the image
+    <string>:param test_image_path: image path
+    <string>:return: predicted caption
+    """
+
     IMAGE_SIZE = 224
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
