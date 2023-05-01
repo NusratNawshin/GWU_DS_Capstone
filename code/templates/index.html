@@ -8,6 +8,8 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+
 </head>
 <body>
 
@@ -26,7 +28,7 @@
 
     <div style="text-align: center" class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
-        <button type="submit" class="btn btn-success btn-lg btn-block" style="background-color: darkcyan; font-size: x-large">Generate</button>
+        <button type="submit"   class="btn btn-success btn-lg btn-block" style="background-color: darkcyan; font-size: x-large">Generate</button>
       </div>
     </div>
 
@@ -36,10 +38,16 @@
   <img id='image_name' src="{{img_path}}" height="400px" width="400px" style="display: block; margin-left: auto;margin-right: auto; width: 50%">
 	<h2 id="caption"> Caption   : <i> {{prediction}} </i></h2>
    <div style="text-align: center" class="col-sm-offset-2 col-sm-10">
-        <button class="btn btn-info btn-lg btn-block" style="font-size: x-large" onclick="sayit() ">Say it again</button>
+        <button  class="btn btn-info btn-lg btn-block" style="font-size: x-large" onclick="sayit() "><span id="boot-icon" class="bi bi-play" style="font-size: 30px; -webkit-text-stroke: 3.9px rgb(17, 248, 13);"></span>
+          Say it again</button>
+
    </div>
   <script>
+
     function sayit(){
+      document.getElementById('boot-icon').classList.remove('bi-play');
+      document.getElementById('boot-icon').classList.add('bi-stop');
+      document.getElementById('boot-icon').style.webkitTextStroke= " 3.9px rgb(248, 13, 13)";
       console.log("Say it button")
       caption=document.getElementById('caption')
       var text = caption.innerHTML
@@ -58,6 +66,9 @@
         dataType : 'text',
         success : function (data){
           console.log("Success")
+          document.getElementById('boot-icon').classList.remove('bi-stop');
+          document.getElementById('boot-icon').classList.add('bi-play');
+          document.getElementById('boot-icon').style.webkitTextStroke= " 3.9px rgb(17, 248, 13)";
         }
       })
     }
