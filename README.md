@@ -63,3 +63,10 @@
 
 - templates:
   > - index.html: template of the UI website
+
+
+## Instrucion to run the UI
+
+> python3 -m pip install -r requirement.txt
+> cd code
+> python3 -u app.py
