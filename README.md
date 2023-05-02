@@ -67,6 +67,6 @@
 
 ## Instrucion to run the UI
 
-> python3 -m pip install -r requirement.txt
-> cd code
-> python3 -u app.py
+> - python3 -m pip install -r requirement.txt
+> - cd code
+> - python3 -u app.py
