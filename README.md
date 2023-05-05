@@ -21,7 +21,7 @@
   > - train (need to manually download from the dataset link)
   > - val (need to manually download from the dataset link)
 
-## ALL Codes:
+## Code:
 
 ### python files
 - app.py: Main code for the UI website 
@@ -38,7 +38,7 @@
 
 - preprocessing.py: Read data from annotation json files and kept only the image names and captions. Split into TRAIN-VALIDATION-TEST set and stored annotaions in csv files
 
-- single_image_captioning.py: Reads the best model, extracts image feature and returns generated caption for single test image file
+- single_image_captioning.py: Reads the best model, reads image from static/test1, extracts image feature and returns generated caption for single test image file
 
 - test.py: Reads the best model and generates captions on the test set
 
@@ -65,8 +65,18 @@
   > - index.html: template of the UI website
 
 
-## Instrucion to run the UI
+## Instrucion to run all
 
 > - python3 -m pip install -r requirement.txt
 > - cd code
+> - python3 -u preprocessing.py
+> - python3 -u caption_tokenization.py
+> - python3 -u image_feature_extraction.py
+> - python3 -u train_and_validation.py
+> - python3 -u caption_generation.py
+> - python3 -u test.py
+> - python3 -u evaluation_metrices.py
+> - python3 -u final_scores.py
+> - python3 -u single_image_captioning.py
 > - python3 -u app.py
+
