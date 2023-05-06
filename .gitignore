@@ -1,3 +1,11 @@
-/data/*
-/code/model/*
+/data/cleaned_annotations
+/data/cleaned_BERT_tokenized_annotation
+/data/images
+/data/tokenized_annotation
+/code/model/BestModel
+/code/model/BestModel2
+/code/model/EncodedImageTest.pkl
+/code/model/EncodedImageTrain.pkl
+/code/model/EncodedImageValid.pkl
 /.idea
+/code/modelArchitecture/
